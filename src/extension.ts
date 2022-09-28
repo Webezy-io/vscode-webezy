@@ -148,7 +148,7 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
   });
 
   context.subscriptions.push(commands.registerCommand('webezy.newProject', async () => {
-    newProject(context).then((res:any) => {
+    newProject(context,webezy).then((res:any) => {
       let clients = '';
       res.clients.forEach((c: { label: string; }) => {
         clients = clients + ' '+ c.label.toLowerCase();
@@ -162,14 +162,14 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
   }));
 
   context.subscriptions.push(commands.registerCommand('webezy.wz', async () => {
-		const options: { [key: string]: (context: ExtensionContext ) => Promise<any> } = {
+		const options: { [key: string]: (context: ExtensionContext , webezy: WebezyModule) => Promise<any> } = {
 			newProject,
 		};
 		const quickPick = window.createQuickPick();
 		quickPick.items = Object.keys(options).map(label => ({ label }));
 		quickPick.onDidChangeSelection(selection => {
 			if (selection[0]) {
-				options[selection[0].label](context).then(res => {
+				options[selection[0].label](context,webezy).then(res => {
             let clients = '';
             res.clients.forEach((c: { label: string; }) => {
               clients = clients + ' '+ c.label.toLowerCase();

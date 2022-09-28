@@ -139,7 +139,7 @@ function initTreeView(treeView, context, webezy, folderPath) {
         (_a = webezy_1.WebezyPanel.currentPanel) === null || _a === void 0 ? void 0 : _a.setResource(data);
     });
     context.subscriptions.push(vscode_1.commands.registerCommand('webezy.newProject', () => __awaiter(this, void 0, void 0, function* () {
-        (0, newProject_1.newProject)(context).then((res) => {
+        (0, newProject_1.newProject)(context, webezy).then((res) => {
             var _a;
             let clients = '';
             res.clients.forEach((c) => {
@@ -160,7 +160,7 @@ function initTreeView(treeView, context, webezy, folderPath) {
         quickPick.items = Object.keys(options).map(label => ({ label }));
         quickPick.onDidChangeSelection(selection => {
             if (selection[0]) {
-                options[selection[0].label](context).then(res => {
+                options[selection[0].label](context, webezy).then(res => {
                     var _a;
                     let clients = '';
                     res.clients.forEach((c) => {

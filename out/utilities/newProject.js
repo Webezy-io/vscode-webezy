@@ -20,7 +20,7 @@ const vscode_1 = require("vscode");
  *
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
-function newProject(context) {
+function newProject(context, webezy) {
     return __awaiter(this, void 0, void 0, function* () {
         class MyButton {
             constructor(iconPath, tooltip) {
@@ -94,7 +94,7 @@ function newProject(context) {
                     totalSteps: 6,
                     value: state.domain || 'domain',
                     prompt: 'Enter your organization domain',
-                    validate: validateNameIsUnique,
+                    validate: validateDomain,
                     shouldResume: shouldResume
                 });
                 return (input) => inputHostName(input, state);
@@ -109,7 +109,7 @@ function newProject(context) {
                     totalSteps: 6,
                     value: state.host || 'localhost',
                     prompt: 'Enter the host name',
-                    validate: validateNameIsUnique,
+                    validate: validateHostName,
                     shouldResume: shouldResume
                 });
                 return (input) => inputPort(input, state);
@@ -124,7 +124,7 @@ function newProject(context) {
                     totalSteps: 6,
                     value: state.port || '50051',
                     prompt: 'Enter the port number',
-                    validate: validateNameIsUnique,
+                    validate: validatePortNumber,
                     shouldResume: shouldResume
                 });
             });
@@ -154,9 +154,25 @@ function newProject(context) {
         }
         function validateNameIsUnique(name) {
             return __awaiter(this, void 0, void 0, function* () {
-                // ...validate...
-                // await new Promise(resolve => setTimeout(resolve, 1000));
-                return name === 'vscode' ? 'Name not unique' : undefined;
+                return webezy.projects[name] !== undefined ? 'Project name not unique' : undefined;
+            });
+        }
+        function validateDomain(name) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return name.includes('.') ? 'Domain must not include any suffix' : undefined;
+            });
+        }
+        function validateHostName(host) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return host !== 'localhost' ? undefined : host.includes('.') ? undefined : 'Host name must be a valid DNS or IP address.';
+            });
+        }
+        function validatePortNumber(port) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (port.trim() === '') {
+                    return 'Value must be a valid integer.';
+                }
+                return Number.isNaN(Number(port)) ? 'Value must be a valid integer.' : undefined;
             });
         }
         function getAvailableRuntimes(resourceGroup, token) {

@@ -4,13 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, ThemeIcon } from 'vscode';
+import { WebezyModule } from './webezyJson';
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
  * 
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
-export async function newProject(context: ExtensionContext) {
+export async function newProject(context: ExtensionContext,webezy:WebezyModule) {
 
 	class MyButton implements QuickInputButton {
 		constructor(public iconPath: ThemeIcon, public tooltip: string) { }
@@ -98,7 +99,7 @@ export async function newProject(context: ExtensionContext) {
 			totalSteps: 6 ,
 			value: state.domain || 'domain',
 			prompt: 'Enter your organization domain',
-			validate: validateNameIsUnique,
+			validate: validateDomain,
 			shouldResume: shouldResume
 		});
 		return (input: MultiStepInput) => inputHostName(input, state);
@@ -112,7 +113,7 @@ export async function newProject(context: ExtensionContext) {
 			totalSteps: 6 ,
 			value: state.host || 'localhost',
 			prompt: 'Enter the host name',
-			validate: validateNameIsUnique,
+			validate: validateHostName,
 			shouldResume: shouldResume
 		});
 		return (input: MultiStepInput) => inputPort(input, state);
@@ -126,7 +127,7 @@ export async function newProject(context: ExtensionContext) {
 			totalSteps: 6 ,
 			value: state.port || '50051',
 			prompt: 'Enter the port number',
-			validate: validateNameIsUnique,
+			validate: validatePortNumber,
 			shouldResume: shouldResume
 		});
 	}
@@ -157,10 +158,24 @@ export async function newProject(context: ExtensionContext) {
 	}
 
 	async function validateNameIsUnique(name: string) {
-		// ...validate...
-		// await new Promise(resolve => setTimeout(resolve, 1000));
-		return name === 'vscode' ? 'Name not unique' : undefined;
+		return webezy.projects[name] !== undefined ? 'Project name not unique' : undefined;
 	}
+
+    async function validateDomain(name:string) {
+        return name.includes('.') ? 'Domain must not include any suffix' : undefined;
+    }
+
+    async function validateHostName(host:string) {
+        return host !== 'localhost' ? undefined : host.includes('.') ? undefined : 'Host name must be a valid DNS or IP address.';
+    }
+
+    async function validatePortNumber(port:string) {
+        if (port.trim() === '') {
+            return 'Value must be a valid integer.';
+        }
+        
+        return Number.isNaN(Number(port)) ? 'Value must be a valid integer.' : undefined ;
+    }
 
 	async function getAvailableRuntimes(resourceGroup: QuickPickItem | string, token?: CancellationToken): Promise<QuickPickItem[]> {
 		// ...retrieve...
