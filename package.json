@@ -2,16 +2,22 @@
   "name": "vscode-webezy",
   "displayName": "webezy",
   "description": "A webezy.io framework extension for creating managing and deploying your webezy.io projects.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "webezy",
   "engines": {
     "vscode": "^1.46.0"
   },
-  "extensionKind":[
+  "extensionKind": [
     "ui",
     "workspace"
   ],
-  "keywords": ["gRPC","webezy","Framework","CLI","HTTP2"],
+  "keywords": [
+    "gRPC",
+    "webezy",
+    "Framework",
+    "CLI",
+    "HTTP2"
+  ],
   "icon": "assets/W.png",
   "categories": [
     "Language Packs",
