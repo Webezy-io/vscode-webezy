@@ -56,6 +56,10 @@ Initial release of vscode-webezy extension
 
 Initial release of creating new project 
 
+### 0.0.3
+
+Added documentations
+
 ---
 _Created with love by Amit Shmulevitch. 2022 © webezy.io_
 
