@@ -1,0 +1,34 @@
+main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100%;
+  width: 100%;
+}
+
+main > * {
+  margin: 0.5rem 0;
+}
+
+
+#icons {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+  justify-content: center;
+}
+
+#icons .icon {
+	width: 140px;
+	padding: 20px;
+	font-size: 14px;
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+}
+
+#icons .icon .codicon {
+	font-size: 32px;
+	padding-bottom: 16px;
+}

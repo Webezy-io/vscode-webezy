@@ -1,0 +1,133 @@
+{
+  "name": "vscode-webezy",
+  "displayName": "webezy",
+  "description": "A webezy.io framework extension for creating managing and deploying your webezy.io projects.",
+  "version": "0.0.1",
+  "publisher": "webezy",
+  "engines": {
+    "vscode": "^1.46.0"
+  },
+  "extensionKind":[
+    "ui",
+    "workspace"
+  ],
+  "keywords": ["gRPC","webezy","Framework","CLI","HTTP2"],
+  "icon": "assets/W.png",
+  "categories": [
+    "Language Packs",
+    "Snippets",
+    "Visualization",
+    "Other",
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onCommand:webezy.newProject",
+    "onCommand:webezy.wz",
+    "onView:webezy-projects"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "webezy-io",
+          "title": "Webezy.io",
+          "icon": "favicon.svg"
+        }
+      ]
+    },
+    "views": {
+      "webezy-io": [
+        {
+          "id": "webezy-projects",
+          "name": "Projects"
+        },
+        {
+          "type": "webview",
+          "id": "webezy-inspector",
+          "name": "Inspector"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "webezy-projects",
+        "contents": "In order to use webezy.io features, you can open a folder containing a webezy project or create a new project.\n[Open Folder](command:vscode.openFolder)\n[Create Project](command:webezy-code.newProject)\nTo learn more about how to use webezy.io and create projects in VS Code [read our docs](https://www.webezy.io/docs).",
+        "when": "webezy.projects == true"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "webezy.refreshEntry",
+          "when": "view == webezy-projects",
+          "group": "navigation"
+        },
+        {
+          "command": "webezy.newProject",
+          "when": "view == webezy-projects",
+          "group": "navigation"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "webezy.showHelp",
+        "title": "Help",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.refreshEntry",
+        "title": "Refresh",
+        "category": "webezy.io",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "webezy.newProject",
+        "title": "New Project",
+        "category": "webezy.io",
+        "icon": "$(add)"
+      },
+      {
+        "command": "webezy.version",
+        "title": "Display Version",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.wz",
+        "title": "wz",
+        "category": "webezy.io"
+      }
+    ]
+  },
+  "scripts": {
+    "install:all": "npm install && npm --prefix ./webview-ui install ./webview-ui",
+    "start:webview": "npm --prefix ./webview-ui run start",
+    "build:webview": "npm --prefix ./webview-ui run build",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/node": "^12.11.7",
+    "@types/vscode": "^1.46.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
+    "eslint": "^7.19.0",
+    "glob": "^7.1.6",
+    "prettier": "^2.2.1",
+    "typescript": "^4.1.3",
+    "vscode-test": "^1.5.0"
+  },
+  "dependencies": {
+    "@vscode/codicons": "^0.0.32"
+  },
+  "homepage": "https://github.com/Webezy-io/vscode-webezy/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Webezy-io/vscode-webezy.git"
+  }
+}
