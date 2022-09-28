@@ -2,7 +2,7 @@
   "name": "vscode-webezy",
   "displayName": "webezy",
   "description": "A webezy.io framework extension for creating managing and deploying your webezy.io projects.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "webezy",
   "engines": {
     "vscode": "^1.46.0"
