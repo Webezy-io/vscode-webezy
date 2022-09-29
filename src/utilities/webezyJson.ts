@@ -6,6 +6,7 @@ import { Uri } from "vscode";
 export class WebezyModule {
 
   private readonly _projects: Projects | any = {};
+  private _defaultProjects: string[] = [];
 
     constructor(private rootDir:string, private subDirs: string[]) {
       this.subDirs = subDirs;
@@ -15,6 +16,9 @@ export class WebezyModule {
 
     public get projects() : Projects {
       return <Projects>this._projects;
+    }
+    public setDefaultProjects(projectsPaths:string[]): void {
+      this._defaultProjects = projectsPaths;
     }
 
     public refresh(subDirs?:string[]) {
@@ -28,7 +32,14 @@ export class WebezyModule {
           }
         }
       });
-      console.log(this._projects)
+      this._defaultProjects.forEach(prj => {
+        let project = getProject(Uri.file(prj+'/webezy.json').fsPath);
+        if (project !== undefined) {
+          if (this._projects !== undefined) {
+            this._projects[project.project?.name !== undefined ? project.project?.name : 'unknown'] = project;
+          }
+        }
+      });
     }
     
 }

@@ -1,8 +1,18 @@
 <h4>{{resource ? resource.name : 'Choose a resource in the projects view above.'}}</h4>
-<div class="row-space-between">
-    <vscode-tag *ngIf="resource !== undefined">{{resource.type === null ? 'service' : resource.type === 'projects' ?
+<div class="row">
+    <vscode-tag *ngIf="resource !== undefined && resource.messages === undefined && resource.methods === undefined">{{
+        resource.type === 'projects' ?
         resource.type : resource.kind.split('/')[1] }}</vscode-tag>
-    <vscode-button disabled>Edit<span slot="start" class="codicon codicon-edit"></span></vscode-button>
+    <vscode-tag *ngIf="resource !== undefined && resource.methods === undefined && resource.kind === undefined">Package
+    </vscode-tag>
+    <vscode-tag *ngIf="resource !== undefined && resource.messages === undefined && resource.kind === undefined">Service
+    </vscode-tag>
+
+    <vscode-button style="margin-left: 1rem;" disabled>Edit<span slot="start" class="codicon codicon-edit"></span>
+    </vscode-button>
+    <vscode-button style="margin-left: auto;" appearance="icon" disabled><span class="codicon codicon-json"></span>
+    </vscode-button>
+    <vscode-button appearance="icon" disabled><span class="codicon codicon-file"></span></vscode-button>
 </div>
 <vscode-divider></vscode-divider>
 <div>
@@ -17,7 +27,7 @@
         </li>
     </ul>
     <div *ngIf="resource.type === 'projects'">
-
+        <p style="word-wrap: break-word;"><span class="codicon codicon-folder"></span>{{resource.uri}}</p>
         <h3><i class="codicon codicon-server" style="margin-right: 0.5rem;"></i>Services</h3>
         <vscode-divider></vscode-divider>
 
@@ -27,7 +37,9 @@
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="2"># RPC's</vscode-data-grid-cell>
             </vscode-data-grid-row>
             <vscode-data-grid-row *ngFor="let svc of _app.listServices(resource.name) | keyvalue">
-                <vscode-data-grid-cell grid-column="1">{{svc.key}}</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="1">
+                    <vscode-button (click)="revealService(svc.key)">{{svc.key}}</vscode-button>
+                </vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">{{svc.value.methods.length}}</vscode-data-grid-cell>
             </vscode-data-grid-row>
         </vscode-data-grid>
@@ -40,7 +52,11 @@
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="2"># Messages</vscode-data-grid-cell>
             </vscode-data-grid-row>
             <vscode-data-grid-row *ngFor="let pkg of _app.listPackages(resource.name) | keyvalue">
-                <vscode-data-grid-cell grid-column="1">{{pkg.key.split('/')[pkg.key.split('/').length -1].split('.')[0]}}</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="1">
+                    <vscode-button
+                        (click)="revealPackage(resource.domain+'.'+pkg.key.split('/')[2].split('.')[0]+'.'+pkg.key.split('/')[1])">
+                        {{pkg.key.split('/')[pkg.key.split('/').length -1].split('.')[0]}}</vscode-button>
+                </vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">{{pkg.value.messages.length}}</vscode-data-grid-cell>
             </vscode-data-grid-row>
         </vscode-data-grid>
@@ -54,87 +70,131 @@
     </div>
 
     <!-- Package -->
-
+    <div *ngIf=" resource.methods === undefined && resource.kind === undefined">
+        <p *ngIf="resource.description">{{resource.description}}</p>
+        <vscode-data-grid grid-template-columns="1fr 1fr" aria-label="Basic">
+            <vscode-data-grid-row row-type="header">
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Message</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="2"># Fields</vscode-data-grid-cell>
+            </vscode-data-grid-row>
+            <vscode-data-grid-row *ngFor="let msg of resource.messages">
+                <vscode-data-grid-cell grid-column="1">
+                    <vscode-button (click)="revealMessage(msg.fullName)">{{msg.name}}</vscode-button>
+                </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">
+                    {{msg.fields.length}}
+                </vscode-data-grid-cell>
+            </vscode-data-grid-row>
+        </vscode-data-grid>
+    </div>
     <!-- Service -->
+    <div *ngIf=" resource.messages === undefined && resource.kind === undefined">
+        <p *ngIf="resource.description">{{resource.description}}</p>
+        <vscode-data-grid grid-template-columns="1fr 1fr" aria-label="Basic">
+            <vscode-data-grid-row row-type="header">
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="1">RPC</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Type</vscode-data-grid-cell>
+            </vscode-data-grid-row>
+            <vscode-data-grid-row *ngFor="let rpc of resource.methods">
+                <vscode-data-grid-cell grid-column="1">
+                    <vscode-button (click)="revealRPC(rpc.name)">{{rpc.name}}</vscode-button>
+                </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">
+                    {{rpc.clientStreaming && rpc.serverStreaming ? 'Bidi' : rpc.clientStreaming && (rpc.serverStreaming
+                    ===
+                    false || rpc.serverStreaming === undefined) ? 'Client Stream' : rpc.serverStreaming &&
+                    (rpc.clientStreaming === false || rpc.clientStreaming === undefined) ? 'Server Stream' : 'Unary'}}
+                </vscode-data-grid-cell>
+            </vscode-data-grid-row>
+        </vscode-data-grid>
+    </div>
 
     <!-- Enum -->
 
     <!-- Message -->
-    <vscode-data-grid grid-template-columns="1fr 1fr" *ngIf="resource.kind.split('/')[1] === 'message'"
-        aria-label="Basic">
-        <vscode-data-grid-row row-type="header">
-            <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Name</vscode-data-grid-cell>
-            <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Package</vscode-data-grid-cell>
-        </vscode-data-grid-row>
-        <vscode-data-grid-row>
-            <vscode-data-grid-cell grid-column="1">{{resource.name}}</vscode-data-grid-cell>
-            <vscode-data-grid-cell grid-column="2">
-                <vscode-button>{{resource.fullName.split('.')[1]}}</vscode-button>
-            </vscode-data-grid-cell>
-        </vscode-data-grid-row>
+    <div *ngIf="resource.fields !== undefined">
+        <p *ngIf="resource.description">{{resource.description}}</p>
+        <vscode-data-grid grid-template-columns="1fr 1fr" aria-label="Basic">
+            <vscode-data-grid-row row-type="header">
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Name</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Package</vscode-data-grid-cell>
+            </vscode-data-grid-row>
+            <vscode-data-grid-row>
+                <vscode-data-grid-cell grid-column="1">{{resource.name}}</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">
+                    <vscode-button (click)="revealPackage(resource.fullName.replace('.'+resource.name,''))">
+                        {{resource.fullName.split('.')[1]}}</vscode-button>
+                </vscode-data-grid-cell>
+            </vscode-data-grid-row>
 
-    </vscode-data-grid>
-    <h5 *ngIf="resource.kind.split('/')[1] === 'message'">Fields</h5>
-    <vscode-divider *ngIf="resource.kind.split('/')[1] === 'message'"></vscode-divider>
-    <vscode-data-grid grid-template-columns="1fr 1fr 1fr" *ngIf="resource.kind.split('/')[1] === 'message'"
-        aria-label="Basic">
-        <vscode-data-grid-row row-type="header">
-            <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Name</vscode-data-grid-cell>
-            <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Type</vscode-data-grid-cell>
-            <vscode-data-grid-cell cell-type="columnheader" grid-column="3">Label</vscode-data-grid-cell>
-        </vscode-data-grid-row>
-        <vscode-data-grid-row *ngFor="let field of resource.fields;">
-            <vscode-data-grid-cell grid-column="1">{{field.name}}</vscode-data-grid-cell>
-            <vscode-data-grid-cell grid-column="2">
-                <div class="row"><i
-                        [class]="'codicon codicon-'+(field.fieldType.split('_')[1].toLowerCase() === 'string' ? 'symbol-string' : field.fieldType.split('_')[1].toLowerCase().includes('int') || field.fieldType.split('_')[1].toLowerCase().includes('double') || field.fieldType.split('_')[1].toLowerCase().includes('float') ? 'symbol-numeric' : field.fieldType.split('_')[1].toLowerCase() === 'bool' ? 'symbol-boolean':  field.fieldType.split('_')[1].toLowerCase() === 'message' ? 'mail' : 'symbol-field' )"></i>{{field.fieldType.split('_')[1].toLowerCase()}}
-                </div>
-            </vscode-data-grid-cell>
-            <vscode-data-grid-cell grid-column="3">
-                <div class="row"><i
-                        [class]="'codicon codicon-'+(field.label.split('_')[1].toLowerCase() === 'repeated' ? 'symbol-array' : 'tag' )"></i>{{field.label.split('_')[1].toLowerCase()}}
-                </div>
-            </vscode-data-grid-cell>
-        </vscode-data-grid-row>
-    </vscode-data-grid>
+        </vscode-data-grid>
+        <h5>Fields</h5>
+        <vscode-divider></vscode-divider>
+        <vscode-data-grid grid-template-columns="1fr 1fr 1fr" aria-label="Basic">
+            <vscode-data-grid-row row-type="header">
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Name</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Type</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="3">Label</vscode-data-grid-cell>
+            </vscode-data-grid-row>
+            <vscode-data-grid-row *ngFor="let field of resource.fields;">
+                <vscode-data-grid-cell grid-column="1">{{field.name}}</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">
+                    <div class="row"><i
+                            [class]="'codicon codicon-'+(field.fieldType.split('_')[1].toLowerCase() === 'string' ? 'symbol-string' : field.fieldType.split('_')[1].toLowerCase().includes('int') || field.fieldType.split('_')[1].toLowerCase().includes('double') || field.fieldType.split('_')[1].toLowerCase().includes('float') ? 'symbol-numeric' : field.fieldType.split('_')[1].toLowerCase() === 'bool' ? 'symbol-boolean':  field.fieldType.split('_')[1].toLowerCase() === 'message' ? 'mail' : 'symbol-field' )"></i>{{field.fieldType.split('_')[1].toLowerCase()}}
+                    </div>
+                </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="3">
+                    <div class="row"><i
+                            [class]="'codicon codicon-'+(field.label.split('_')[1].toLowerCase() === 'repeated' ? 'symbol-array' : 'tag' )"></i>{{field.label.split('_')[1].toLowerCase()}}
+                    </div>
+                </vscode-data-grid-cell>
+            </vscode-data-grid-row>
+        </vscode-data-grid>
+    </div>
+
     <!-- RPC -->
-    <vscode-data-grid grid-template-columns="50px 4fr 30%" *ngIf="resource.inputType && resource.outputType"
-        aria-label="Basic">
-        <vscode-data-grid-row row-type="header">
-            <vscode-data-grid-cell cell-type="columnheader" grid-column="1">I/O</vscode-data-grid-cell>
-            <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Type</vscode-data-grid-cell>
-            <vscode-data-grid-cell cell-type="columnheader" grid-column="3">Stream</vscode-data-grid-cell>
-        </vscode-data-grid-row>
-        <vscode-data-grid-row>
-            <vscode-data-grid-cell grid-column="1">In</vscode-data-grid-cell>
-            <vscode-data-grid-cell grid-column="2">
-                <vscode-button>{{resource.inputType.split('.').pop()}}</vscode-button>
-            </vscode-data-grid-cell>
-            <vscode-data-grid-cell grid-column="3">
-                <ng-container *ngIf="resource.serverStreaming; then stream; else unary"></ng-container>
-                <ng-template #stream>
-                    <div class="icon"><i class="codicon codicon-check"></i> </div>
-                </ng-template>
-                <ng-template #unary>
-                    <div class="icon"><i class="codicon codicon-close"></i> </div>
-                </ng-template>
-            </vscode-data-grid-cell>
-        </vscode-data-grid-row>
-        <vscode-data-grid-row>
-            <vscode-data-grid-cell grid-column="1">Out</vscode-data-grid-cell>
-            <vscode-data-grid-cell grid-column="2">
-                <vscode-button>{{resource.outputType.split('.').pop()}}</vscode-button>
-            </vscode-data-grid-cell>
-            <vscode-data-grid-cell grid-column="3">
-                <ng-container *ngIf="resource.serverStreaming; then stream; else unary"></ng-container>
-                <ng-template #stream>
-                    <div class="icon"><i class="codicon codicon-check"></i> </div>
-                </ng-template>
-                <ng-template #unary>
-                    <div class="icon"><i class="codicon codicon-close"></i> </div>
-                </ng-template>
+    <div *ngIf="resource.inputType && resource.outputType">
+        <p *ngIf="resource.description">{{resource.description}}</p>
+        <vscode-data-grid grid-template-columns="50px 4fr 30%" aria-label="Basic">
+            <vscode-data-grid-row row-type="header">
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="1">I/O</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Type</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="3">Stream</vscode-data-grid-cell>
+            </vscode-data-grid-row>
+            <vscode-data-grid-row>
+                <vscode-data-grid-cell grid-column="1">In</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">
+                    <vscode-button (click)="revealMessage(resource.inputType)">{{resource.inputType.split('.').pop()}}
+                    </vscode-button>
+                </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="3">
+                    <ng-container *ngIf="resource.serverStreaming; then stream; else unary"></ng-container>
+                    <ng-template #stream>
+                        <div class="icon"><i class="codicon codicon-check"></i> </div>
+                    </ng-template>
+                    <ng-template #unary>
+                        <div class="icon"><i class="codicon codicon-close"></i> </div>
+                    </ng-template>
+                </vscode-data-grid-cell>
+            </vscode-data-grid-row>
+            <vscode-data-grid-row>
+                <vscode-data-grid-cell grid-column="1">Out</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">
+                    <vscode-button (click)="revealMessage(resource.outputType)">{{resource.outputType.split('.').pop()}}
+                    </vscode-button>
+                </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="3">
+                    <ng-container *ngIf="resource.serverStreaming; then stream; else unary"></ng-container>
+                    <ng-template #stream>
+                        <div class="icon"><i class="codicon codicon-check"></i> </div>
+                    </ng-template>
+                    <ng-template #unary>
+                        <div class="icon"><i class="codicon codicon-close"></i> </div>
+                    </ng-template>
 
-            </vscode-data-grid-cell>
-        </vscode-data-grid-row>
-    </vscode-data-grid>
+                </vscode-data-grid-cell>
+            </vscode-data-grid-row>
+        </vscode-data-grid>
+    </div>
+
 </div>

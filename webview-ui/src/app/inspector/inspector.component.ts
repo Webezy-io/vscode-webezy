@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AppServiceService } from '../app-service.service';
+import { vscode } from '../utilities/vscode';
 
 
 interface Column {
@@ -28,5 +29,32 @@ export class InspectorComponent implements OnInit {
     
   }
 
+  revealPackage(pkg:any) {
+    vscode.postMessage({
+      command: 'webezy.reveal',
+      args: [pkg]
+    })
+  }
+
+  revealMessage(msg:any) {
+    vscode.postMessage({
+      command: 'webezy.reveal',
+      args: [msg]
+    })
+  }
+
+  revealService(svc:any) {
+    vscode.postMessage({
+      command: 'webezy.reveal',
+      args: [svc]
+    })
+  }
+
+  revealRPC(rpc:any) {
+    vscode.postMessage({
+      command: 'webezy.reveal',
+      args: [rpc]
+    })
+  }
 
 }

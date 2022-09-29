@@ -1,4 +1,4 @@
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn, WebviewViewProvider, CancellationToken, WebviewView, WebviewViewResolveContext } from "vscode";
+import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn, WebviewViewProvider, CancellationToken, WebviewView, WebviewViewResolveContext, commands } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { VSCodeMessage } from "../utilities/interfaces";
 import { WebezyModule } from "../utilities/webezyJson";
@@ -15,15 +15,18 @@ import { WebezyModule } from "../utilities/webezyJson";
  */
 export class WebezyPanel implements WebviewViewProvider {
   public static currentPanel: WebezyPanel | undefined;
+  public static generatorPanel: WebezyPanel | undefined;
+  public static helpPanel: WebezyPanel | undefined;
+
   private readonly _panel: WebviewPanel | undefined;
   private _disposables: Disposable[] = [];
 	private _view?: WebviewView;
   private _extensionUri: Uri;
   public _webezyModule: WebezyModule | undefined;
-
+  public _page:'Inspector' | 'Help' | 'Generator' = 'Inspector';
   public resolveWebviewView(webviewView: WebviewView, context: WebviewViewResolveContext<unknown>, token: CancellationToken): void | Thenable<void> {
 		this._view = webviewView;
-
+    
 		webviewView.webview.options = {
 			// Allow scripts in the webview
 			enableScripts: true,
@@ -32,18 +35,22 @@ export class WebezyPanel implements WebviewViewProvider {
 				this._extensionUri
 			]
 		};
-		webviewView.webview.html = this._getWebviewContent(webviewView.webview, this._extensionUri, true);
-    webviewView.webview.postMessage({type:'init',resource:this._webezyModule?.projects,page:'Inspector'});
-		webviewView.webview.onDidReceiveMessage(data => {
-			console.log(data);
-		});
+    webviewView.webview.html = this._getWebviewContent(webviewView.webview, this._extensionUri, true);
+    webviewView.webview.postMessage({type:'init',resource:this._webezyModule?.projects,page:this._page});
+    webviewView.webview.onDidReceiveMessage((data:any) => {
+      console.log(data);
+      let args = data.args ? data.args : [];
+
+      commands.executeCommand(data.command,...args);
+    });
 
     webviewView.onDidChangeVisibility(event => {
       if (webviewView.visible) {
         webviewView.webview.html = this._getWebviewContent(webviewView.webview, this._extensionUri, true);
-        webviewView.webview.postMessage({type:'init',resource:this._webezyModule?.projects,page:'Inspector'});
+        webviewView.webview.postMessage({type:'init',resource:this._webezyModule?.projects,page:this._page});
       }
     });
+	
 	}
   /**
    * The HelloWorldPanel class private constructor (called only from the render method).
@@ -102,6 +109,8 @@ export class WebezyPanel implements WebviewViewProvider {
       );
 
       WebezyPanel.currentPanel = new WebezyPanel(panel, extensionUri);
+      WebezyPanel.generatorPanel = new WebezyPanel(panel, extensionUri);
+      WebezyPanel.helpPanel = new WebezyPanel(panel, extensionUri);
 
     }
   }
@@ -139,6 +148,7 @@ export class WebezyPanel implements WebviewViewProvider {
     // The CSS file from the Angular build output
     const stylesUri = getUri(webview, extensionUri, ["webview-ui", "build", "styles.css"]);
     // The JS files from the Angular build output
+    const logo =  getUri(webview, extensionUri, ["webview-ui", "build", "assets","proto.svg"]);
     const runtimeUri = getUri(webview, extensionUri, ["webview-ui", "build", "runtime.js"]);
     const polyfillsUri = getUri(webview, extensionUri, ["webview-ui", "build", "polyfills.js"]);
     const scriptUri = getUri(webview, extensionUri, ["webview-ui", "build", "main.js"]);
@@ -154,11 +164,11 @@ export class WebezyPanel implements WebviewViewProvider {
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
+          <base href="/" />
           <title>Webezy.io</title>
           <link href="${codiconsUri}" rel="stylesheet" />
         </head>
         <body>
-
           ${comp}
           <script type="module" src="${runtimeUri}"></script>
           <script type="module" src="${polyfillsUri}"></script>

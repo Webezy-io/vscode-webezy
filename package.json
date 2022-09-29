@@ -27,9 +27,16 @@
     "Programming Languages"
   ],
   "activationEvents": [
+    "onCommand:webezy.help",
     "onCommand:webezy.newProject",
     "onCommand:webezy.wz",
-    "onView:webezy-projects"
+    "onCommand:webezy.version",
+    "onCommand:webezy.viewSources",
+    "onCommand:webezy.changeSetting",
+    "onView:webezy-projects",
+    "onView:webezy-help",
+    "onView:webezy-generator",
+    "onView:webezy-inspector"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -52,6 +59,16 @@
           "type": "webview",
           "id": "webezy-inspector",
           "name": "Inspector"
+        },
+        {
+          "type": "webview",
+          "id": "webezy-generator",
+          "name": "Generator"
+        },
+        {
+          "type": "webview",
+          "id": "webezy-help",
+          "name": "Help"
         }
       ]
     },
@@ -73,12 +90,17 @@
           "command": "webezy.newProject",
           "when": "view == webezy-projects",
           "group": "navigation"
+        },
+        {
+          "command": "webezy.getParent",
+          "when": "view == webezy-inspector && webezy.hasParent",
+          "group": "navigation"
         }
       ]
     },
     "commands": [
       {
-        "command": "webezy.showHelp",
+        "command": "webezy.help",
         "title": "Help",
         "category": "webezy.io"
       },
@@ -103,6 +125,67 @@
         "command": "webezy.wz",
         "title": "wz",
         "category": "webezy.io"
+      },
+      {
+        "command": "webezy.viewSources",
+        "title": "View Source Code",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.reveal",
+        "title": "Display Resource",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.getParent",
+        "icon": "$(arrow-up)",
+        "title": "Get Resource Parent",
+        "category": "webezy.io"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "webezy-setup",
+        "title": "Webezy Setup",
+        "description": "A sample walkthrough of webezy setup",
+        "steps": [
+          {
+						"id": "installpythonextension",
+						"title": "Install Python Extension",
+						"description": "Click here to install the Python Extension. This step will complete once it has been installed.\n[Here](command:workbench.extensions.installExtension?%22ms-python.python%22)",
+            "media": { "markdown": "assets/python.md" },
+            "completionEvents": [
+							"extensionInstalled:ms-python.python"
+						]
+					},
+          {
+            "id": "runcommand",
+            "title": "Verify Webezy CLI Installation",
+            "description": "You need to verify first that webezy.io cli is installed properly.\nInstall the [CLI](https://www.webezy.io) before continuing\n[Get Current Version](command:webezy.version)",
+            "media": {  "markdown": "assets/webezy.md"  },
+            "completionEvents": ["onCommand:webezy.version"]
+          }
+        ]
+      }
+    ],
+    "configuration": [
+      {
+        "id": "webezyProjects",
+        "title": "Projects",
+        "order": 1,
+        "properties": {
+          "webezy.projects.defaultProjects": {
+            "type": "array",
+            "order": 1,
+            "uniqueItems": true,
+            "markdownDescription": "An default projects list to load into [`Projects`](command:webezy-projects.focus) view.",
+            "items": {
+              "description": "A absolute path to root dir where webezy.json file exists",
+              "type": "string",
+              "pattern": "^/|(/[a-zA-Z0-9_-]+)+$"
+            }
+          }
+        }
       }
     ]
   },

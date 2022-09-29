@@ -22,6 +22,7 @@ class WebezyPanel {
      */
     constructor(panel, extensionUri) {
         this._disposables = [];
+        this._page = 'Inspector';
         if (panel !== undefined) {
             this._panel = panel;
             // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -46,15 +47,17 @@ class WebezyPanel {
             ]
         };
         webviewView.webview.html = this._getWebviewContent(webviewView.webview, this._extensionUri, true);
-        webviewView.webview.postMessage({ type: 'init', resource: (_a = this._webezyModule) === null || _a === void 0 ? void 0 : _a.projects, page: 'Inspector' });
-        webviewView.webview.onDidReceiveMessage(data => {
+        webviewView.webview.postMessage({ type: 'init', resource: (_a = this._webezyModule) === null || _a === void 0 ? void 0 : _a.projects, page: this._page });
+        webviewView.webview.onDidReceiveMessage((data) => {
             console.log(data);
+            let args = data.args ? data.args : [];
+            vscode_1.commands.executeCommand(data.command, ...args);
         });
         webviewView.onDidChangeVisibility(event => {
             var _a;
             if (webviewView.visible) {
                 webviewView.webview.html = this._getWebviewContent(webviewView.webview, this._extensionUri, true);
-                webviewView.webview.postMessage({ type: 'init', resource: (_a = this._webezyModule) === null || _a === void 0 ? void 0 : _a.projects, page: 'Inspector' });
+                webviewView.webview.postMessage({ type: 'init', resource: (_a = this._webezyModule) === null || _a === void 0 ? void 0 : _a.projects, page: this._page });
             }
         });
     }
@@ -89,6 +92,8 @@ class WebezyPanel {
                 enableScripts: true,
             });
             WebezyPanel.currentPanel = new WebezyPanel(panel, extensionUri);
+            WebezyPanel.generatorPanel = new WebezyPanel(panel, extensionUri);
+            WebezyPanel.helpPanel = new WebezyPanel(panel, extensionUri);
         }
     }
     /**
@@ -122,6 +127,7 @@ class WebezyPanel {
         // The CSS file from the Angular build output
         const stylesUri = (0, getUri_1.getUri)(webview, extensionUri, ["webview-ui", "build", "styles.css"]);
         // The JS files from the Angular build output
+        const logo = (0, getUri_1.getUri)(webview, extensionUri, ["webview-ui", "build", "assets", "proto.svg"]);
         const runtimeUri = (0, getUri_1.getUri)(webview, extensionUri, ["webview-ui", "build", "runtime.js"]);
         const polyfillsUri = (0, getUri_1.getUri)(webview, extensionUri, ["webview-ui", "build", "polyfills.js"]);
         const scriptUri = (0, getUri_1.getUri)(webview, extensionUri, ["webview-ui", "build", "main.js"]);
@@ -136,11 +142,11 @@ class WebezyPanel {
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
+          <base href="/" />
           <title>Webezy.io</title>
           <link href="${codiconsUri}" rel="stylesheet" />
         </head>
         <body>
-
           ${comp}
           <script type="module" src="${runtimeUri}"></script>
           <script type="module" src="${polyfillsUri}"></script>

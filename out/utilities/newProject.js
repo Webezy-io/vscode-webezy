@@ -164,7 +164,7 @@ function newProject(context, webezy) {
         }
         function validateHostName(host) {
             return __awaiter(this, void 0, void 0, function* () {
-                return host !== 'localhost' ? undefined : host.includes('.') ? undefined : 'Host name must be a valid DNS or IP address.';
+                return host === 'localhost' ? undefined : host.includes('.') ? undefined : 'Host name must be a valid DNS or IP address.';
             });
         }
         function validatePortNumber(port) {

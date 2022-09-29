@@ -220,3 +220,7 @@ export interface CustomType {
 export interface Projects {
   [x: string]: WebezyJson;
 }
+
+export interface VSCodeWebezyConfig {
+  projects: { defaultProjects : string[] }
+}

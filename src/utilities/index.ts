@@ -1,5 +1,7 @@
 import * as fs from 'fs';
-import { WebezyJson } from './interfaces';
+import { workspace } from 'vscode';
+import { VSCodeWebezyConfig, WebezyJson } from './interfaces';
+
 
 export function findFile(filePath: string) {
     if (!filePath) {return null;}
@@ -24,4 +26,16 @@ export function getProject(webezyJsonPath:string): WebezyJson | undefined {
     } 
     return <any>webezy;
 
+}
+
+export function getConfig():VSCodeWebezyConfig {
+    const projects = workspace.getConfiguration('webezy').get('projects.defaultProjects');
+    const cli = workspace.getConfiguration('webezy').get('cli.pyInterpreter');
+    
+    return {
+        projects: {
+            defaultProjects: typeof projects === 'object' ? <string[]>projects : []
+        }
+    };
+    
 }

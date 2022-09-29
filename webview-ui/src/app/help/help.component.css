@@ -1,0 +1,12 @@
+.icon {
+    margin: 0.2rem;
+}
+
+.non-style {
+    font-style: normal;
+}
+
+.column {
+     display: flex;
+     flex-direction: column;
+}

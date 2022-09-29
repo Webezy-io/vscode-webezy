@@ -166,7 +166,7 @@ export async function newProject(context: ExtensionContext,webezy:WebezyModule) 
     }
 
     async function validateHostName(host:string) {
-        return host !== 'localhost' ? undefined : host.includes('.') ? undefined : 'Host name must be a valid DNS or IP address.';
+        return host === 'localhost' ? undefined : host.includes('.') ? undefined : 'Host name must be a valid DNS or IP address.';
     }
 
     async function validatePortNumber(port:string) {

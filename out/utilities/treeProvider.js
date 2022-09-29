@@ -8,6 +8,57 @@ class ProjectsView {
         this._projects = [];
         this.parseProjects(projects);
     }
+    getParent(element) {
+        let parent = {};
+        if (element.kind === 'Message') {
+            this._projects.forEach(prj => {
+                var _a;
+                if (prj.children) {
+                    let pkg = prj.children.filter(el => el.kind === 'Package').find(el => el.label === element.data.fullName.split('.')[1]);
+                    let msgs = (_a = pkg === null || pkg === void 0 ? void 0 : pkg.children) === null || _a === void 0 ? void 0 : _a.filter(msg => msg.kind === 'Message');
+                    if (msgs) {
+                        if (msgs.find(msg => msg.label === element.label)) {
+                            parent = pkg;
+                        }
+                    }
+                }
+            });
+        }
+        else if (element.kind === 'Package') {
+            this._projects.forEach(prj => {
+                if (prj.children) {
+                    let pkg = prj.children.filter(el => el.kind === 'Package').find(el => el.label === element.data.package.split('.')[1]);
+                    if (pkg) {
+                        parent = prj;
+                    }
+                }
+            });
+        }
+        else if (element.kind === 'Service') {
+            this._projects.forEach(prj => {
+                if (prj.children) {
+                    let svc = prj.children.filter(el => el.kind === 'Service').find(el => el.label === element.data.name);
+                    if (svc) {
+                        parent = prj;
+                    }
+                }
+            });
+        }
+        else if (element.kind === 'RPC') {
+            this._projects.forEach(prj => {
+                if (prj.children) {
+                    prj.children.filter(el => el.kind === 'Service').forEach(svc => {
+                        var _a;
+                        let rpc = (_a = svc.children) === null || _a === void 0 ? void 0 : _a.find(el => el.label === element.label);
+                        if (rpc) {
+                            parent = svc;
+                        }
+                    });
+                }
+            });
+        }
+        return parent;
+    }
     parseProjects(projects) {
         for (const project in projects) {
             // if (Object.prototype.hasOwnProperty.call(projects, key)) {

@@ -9,6 +9,57 @@ export class ProjectsView implements TreeDataProvider<CustomType> {
         this.parseProjects(projects);
     }
 
+    getParent(element:CustomType): CustomType {
+        let parent :any = {};
+        if (element.kind === 'Message') {
+            this._projects.forEach(prj => {
+                if (prj.children) {
+                    let pkg = prj.children.filter(el => el.kind === 'Package').find(el => el.label === element.data.fullName.split('.')[1]);
+                    let msgs = pkg?.children?.filter(msg => msg.kind === 'Message');
+                    if(msgs) {
+                        if(msgs.find(msg => msg.label === element.label)) {
+                            parent = pkg;
+                        }
+                    }
+                    
+                }
+                
+            });
+        } else if (element.kind === 'Package') {
+            this._projects.forEach(prj => {
+                if (prj.children) {
+                    let pkg = prj.children.filter(el => el.kind === 'Package').find(el => el.label === element.data.package.split('.')[1]);
+                    if(pkg) {
+                        parent = prj;
+                    }
+                }
+                
+            });
+        } else if(element.kind === 'Service') {
+            this._projects.forEach(prj => {
+                if (prj.children) {
+                    let svc = prj.children.filter(el => el.kind === 'Service').find(el => el.label === element.data.name);
+                    if(svc) {
+                        parent = prj;
+                    }
+                }
+                
+            });
+        } else if(element.kind === 'RPC') {
+            this._projects.forEach(prj => {
+                if (prj.children) {
+                    prj.children.filter(el => el.kind === 'Service').forEach(svc => {
+                        let rpc = svc.children?.find(el => el.label === element.label);
+                        if(rpc) {
+                            parent = svc;
+                        }
+                    });
+                }
+            });
+        }
+        return parent;
+    }
+
     parseProjects(projects: Projects) {
         for (const project in projects) {
             // if (Object.prototype.hasOwnProperty.call(projects, key)) {

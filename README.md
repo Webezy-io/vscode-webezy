@@ -20,6 +20,9 @@ Once webezy extension is installed on your vscode editor [VSCode Marketplace](ht
 you can open a folder that holds one or more webezy.io projects.
 This folder can be a workspace folder for your all webezy.io projects.
 
+__Quick usage__ - Open command pallate and run `"webezy.io: Help"` command. it will enter a setup walkthrough to get started quickly with vscode extension and CLI. 
+
+
 1. Click on the webezy icon at the `Activity Bar` (The outer-left navigation bar), it will activate your webezy.io extension and will open up a fiew views and vscode integrated terminal for each of your projects inside the "Root folder".
 
 2. Open up a folder which holding one or more webezy.io projects
@@ -46,6 +49,18 @@ Projects view + Resource inspector view:
 
 > Tip: Some commands are available through the command pallate (windows `Ctrl+Shift+P` or MacOS `⌘+⇧+P`) try running `webezy: Display Version` to get your current installed webezy CLI in your environment. 
 
+## Contributing
+
+We are welcoming contributions by pull-request.
+
+This extension is provided as open-source software from `webezy.io`, it can be enriched with additional functionalities.
+Check our roadmap before trying to get your hands dirty.
+
+- [Extension Commands](docs/extension-commands.md)
+- [Extension Structure](docs/extension-structure.md)
+- [Extension Development](docs/extension-development-cycle.md)
+
+
 ## Release Notes
 
 ### 0.0.1
@@ -59,6 +74,15 @@ Initial release of creating new project
 ### 0.0.3
 
 Added documentations
+
+### 0.0.4
+
+- Walkthrough for webezy setup
+- User and Workspace configuration for webezy
+- Inspector "Get Parent" navigation button
+- Inline navigation at inspector level
+- Added Help view
+
 
 ---
 _Created with love by Amit Shmulevitch. 2022 © webezy.io_

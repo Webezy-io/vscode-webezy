@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getProject = exports.findFile = void 0;
+exports.getConfig = exports.getProject = exports.findFile = void 0;
 const fs = require("fs");
+const vscode_1 = require("vscode");
 function findFile(filePath) {
     if (!filePath) {
         return null;
@@ -30,4 +31,14 @@ function getProject(webezyJsonPath) {
     return webezy;
 }
 exports.getProject = getProject;
+function getConfig() {
+    const projects = vscode_1.workspace.getConfiguration('webezy').get('projects.defaultProjects');
+    const cli = vscode_1.workspace.getConfiguration('webezy').get('cli.pyInterpreter');
+    return {
+        projects: {
+            defaultProjects: typeof projects === 'object' ? projects : []
+        }
+    };
+}
+exports.getConfig = getConfig;
 //# sourceMappingURL=index.js.map
