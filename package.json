@@ -2,7 +2,7 @@
   "name": "vscode-webezy",
   "displayName": "webezy",
   "description": "A webezy.io framework extension for creating managing and deploying your webezy.io projects.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "webezy",
   "engines": {
     "vscode": "^1.46.0"
@@ -150,20 +150,26 @@
         "description": "A sample walkthrough of webezy setup",
         "steps": [
           {
-						"id": "installpythonextension",
-						"title": "Install Python Extension",
-						"description": "Click here to install the Python Extension. This step will complete once it has been installed.\n[Here](command:workbench.extensions.installExtension?%22ms-python.python%22)",
-            "media": { "markdown": "assets/python.md" },
+            "id": "installpythonextension",
+            "title": "Install Python Extension",
+            "description": "Click here to install the Python Extension. This step will complete once it has been installed.\n[Here](command:workbench.extensions.installExtension?%22ms-python.python%22)",
+            "media": {
+              "markdown": "assets/python.md"
+            },
             "completionEvents": [
-							"extensionInstalled:ms-python.python"
-						]
-					},
+              "extensionInstalled:ms-python.python"
+            ]
+          },
           {
             "id": "runcommand",
             "title": "Verify Webezy CLI Installation",
             "description": "You need to verify first that webezy.io cli is installed properly.\nInstall the [CLI](https://www.webezy.io) before continuing\n[Get Current Version](command:webezy.version)",
-            "media": {  "markdown": "assets/webezy.md"  },
-            "completionEvents": ["onCommand:webezy.version"]
+            "media": {
+              "markdown": "assets/webezy.md"
+            },
+            "completionEvents": [
+              "onCommand:webezy.version"
+            ]
           }
         ]
       }
