@@ -63,26 +63,14 @@ Check our roadmap before trying to get your hands dirty.
 
 ## Release Notes
 
-### 0.0.1
+Get all releases [notes](/docs/releases.md)
 
-Initial release of vscode-webezy extension
+### Latest: 0.0.6
 
-### 0.0.2
-
-Initial release of creating new project 
-
-### 0.0.3
-
-Added documentations
-
-### 0.0.4
-
-- Walkthrough for webezy setup
-- User and Workspace configuration for webezy
-- Inspector "Get Parent" navigation button
-- Inline navigation at inspector level
-- Added Help view
-
+- Added `Generate` commands to command pallate
+- Added `Run` command to run project server
+- Added `Build` command to build project resources
+- Added file watcher for webezy.json to auto refresh project view tree
 
 ---
 _Created with love by Amit Shmulevitch. 2022 © webezy.io_

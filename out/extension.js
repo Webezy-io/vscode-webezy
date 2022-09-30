@@ -17,6 +17,7 @@ const webezyJson_1 = require("./utilities/webezyJson");
 const fs_1 = require("fs");
 const treeProvider_1 = require("./utilities/treeProvider");
 const newProject_1 = require("./utilities/newProject");
+let watcher;
 let activeProjectStatusBar;
 let currentResourceOnView;
 function activate(context) {
@@ -90,11 +91,46 @@ function activate(context) {
             vscode_1.commands.executeCommand(`workbench.action.openWalkthrough`, `webezy.vscode-webezy#webezy-setup`, true);
         });
         context.subscriptions.push(showHelloWorldCommand);
+        const runServer = vscode_1.commands.registerCommand("webezy.run", () => {
+            var _a;
+            (_a = vscode_1.window.activeTerminal) === null || _a === void 0 ? void 0 : _a.sendText(`wz --run-server`);
+        });
+        context.subscriptions.push(runServer);
+        const build = vscode_1.commands.registerCommand("webezy.build", () => {
+            var _a;
+            (_a = vscode_1.window.activeTerminal) === null || _a === void 0 ? void 0 : _a.sendText(`wz --build`);
+        });
+        context.subscriptions.push(build);
         const showCurrentVersion = vscode_1.commands.registerCommand("webezy.version", () => {
             var _a;
             (_a = vscode_1.window.activeTerminal) === null || _a === void 0 ? void 0 : _a.sendText(`wz --version`);
         });
         context.subscriptions.push(showCurrentVersion);
+        const generatePackage = vscode_1.commands.registerCommand("webezy.generatePackage", () => {
+            var _a;
+            (_a = vscode_1.window.activeTerminal) === null || _a === void 0 ? void 0 : _a.sendText(`wz -e g p`);
+        });
+        context.subscriptions.push(generatePackage);
+        const generateService = vscode_1.commands.registerCommand("webezy.generateService", () => {
+            var _a;
+            (_a = vscode_1.window.activeTerminal) === null || _a === void 0 ? void 0 : _a.sendText(`wz -e g s`);
+        });
+        context.subscriptions.push(generateService);
+        const generateMessage = vscode_1.commands.registerCommand("webezy.generateMessage", () => {
+            var _a;
+            (_a = vscode_1.window.activeTerminal) === null || _a === void 0 ? void 0 : _a.sendText(`wz -e g m`);
+        });
+        context.subscriptions.push(generateMessage);
+        const generateEnum = vscode_1.commands.registerCommand("webezy.generateEnum", () => {
+            var _a;
+            (_a = vscode_1.window.activeTerminal) === null || _a === void 0 ? void 0 : _a.sendText(`wz -e g e`);
+        });
+        context.subscriptions.push(generateEnum);
+        const generateRPC = vscode_1.commands.registerCommand("webezy.generateRPC", () => {
+            var _a;
+            (_a = vscode_1.window.activeTerminal) === null || _a === void 0 ? void 0 : _a.sendText(`wz -e g r`);
+        });
+        context.subscriptions.push(generateRPC);
         (_b = webezy_1.WebezyPanel.currentPanel) === null || _b === void 0 ? void 0 : _b.setWebezyModule(webezy);
         context.subscriptions.push(vscode_1.window.registerWebviewViewProvider('webezy-inspector', webezy_1.WebezyPanel.currentPanel));
         if (webezy_1.WebezyPanel.generatorPanel) {
@@ -263,9 +299,12 @@ function colorText(text) {
 }
 function initTreeView(treeView, context, webezy, folderPath, statusBar) {
     vscode_1.commands.executeCommand('setContext', 'webezy.projects', true);
+    if (watcher) {
+        watcher.dispose();
+    }
     let currentProject = '';
     treeView.onDidChangeSelection(event => {
-        var _a;
+        var _a, _b;
         if (event.selection[0].data.uri !== undefined) {
             try {
                 if (event.selection[0].data.uri.includes(folderPath)) {
@@ -290,11 +329,15 @@ function initTreeView(treeView, context, webezy, folderPath, statusBar) {
             catch (error) {
                 vscode_1.window.showErrorMessage(error.message);
             }
-            // statusBar.text = `$(folder) ${currentProject}`;
-            // statusBar.show();
         }
-        console.log(currentProject);
         context.globalState.update('webezy.projects.active', currentProject);
+        watcher = vscode_1.workspace.createFileSystemWatcher(((_a = webezy.projects[currentProject].project) === null || _a === void 0 ? void 0 : _a.uri) + '/webezy.json');
+        watcher.onDidChange(el => {
+            vscode_1.window.showInformationMessage('Altered webezy.json\n' + el.fsPath);
+            setTimeout(() => {
+                vscode_1.commands.executeCommand('webezy.refreshEntry');
+            }, 500);
+        });
         activeProjectStatusBar.text = `$(folder) ${currentProject}`;
         let data;
         if (typeof (event.selection[0].data) === 'object') {
@@ -313,7 +356,7 @@ function initTreeView(treeView, context, webezy, folderPath, statusBar) {
             vscode_1.commands.executeCommand('setContext', 'webezy.hasParent', false);
         }
         currentResourceOnView = event.selection[0];
-        (_a = webezy_1.WebezyPanel.currentPanel) === null || _a === void 0 ? void 0 : _a.setResource(data);
+        (_b = webezy_1.WebezyPanel.currentPanel) === null || _b === void 0 ? void 0 : _b.setResource(data);
     });
 }
 function dispose() {
@@ -323,6 +366,7 @@ function dispose() {
                 term.dispose();
             }
         });
+        watcher.dispose();
     });
 }
 exports.dispose = dispose;

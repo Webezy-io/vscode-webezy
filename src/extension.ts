@@ -1,4 +1,4 @@
-import { commands, TreeView, EventEmitter, ExtensionContext, Uri, window, workspace, Terminal, ThemeIcon, StatusBarItem, StatusBarAlignment } from "vscode";
+import { commands, TreeView, EventEmitter, ExtensionContext, Uri, window, workspace, Terminal, ThemeIcon, StatusBarItem, StatusBarAlignment, FileSystemWatcher } from "vscode";
 import { WebezyPanel } from "./panels/webezy";
 import { findFile, getConfig } from "./utilities";
 
@@ -8,12 +8,12 @@ import { ProjectsView } from "./utilities/treeProvider";
 import { CustomType } from "./utilities/interfaces";
 
 import { newProject } from './utilities/newProject';
-
+let watcher: FileSystemWatcher;
 let activeProjectStatusBar: StatusBarItem;
 let currentResourceOnView:CustomType;
 export async function activate(context: ExtensionContext) {
   commands.executeCommand('setContext','webezy.projects', false);
-
+  
   let folderName = workspace.name; // get the open folder name
   let webezyConfig = getConfig();
   console.log(webezyConfig);  
@@ -44,6 +44,7 @@ export async function activate(context: ExtensionContext) {
   } else {
     window.showErrorMessage("webezy: couldn't get current folder path !");
   }
+
 
   let activeTerminal = false;
   let terminals: Terminal[] = [];
@@ -79,6 +80,7 @@ export async function activate(context: ExtensionContext) {
     }
    
   }
+
   // Create the show hello world command
   WebezyPanel.render(context.extensionUri);
 
@@ -88,10 +90,49 @@ export async function activate(context: ExtensionContext) {
   });
   context.subscriptions.push(showHelloWorldCommand);
   
+  const runServer = commands.registerCommand("webezy.run", () => {
+    window.activeTerminal?.sendText(`wz --run-server`);
+  });
+  context.subscriptions.push(runServer);
+
+  const build = commands.registerCommand("webezy.build", () => {
+    window.activeTerminal?.sendText(`wz --build`);
+  });
+  context.subscriptions.push(build);
+
   const showCurrentVersion = commands.registerCommand("webezy.version", () => {
     window.activeTerminal?.sendText(`wz --version`);
   });
   context.subscriptions.push(showCurrentVersion);
+
+  const generatePackage = commands.registerCommand("webezy.generatePackage", () => {
+    window.activeTerminal?.sendText(`wz -e g p`);
+  });
+  context.subscriptions.push(generatePackage);
+
+  const generateService = commands.registerCommand("webezy.generateService", () => {
+    window.activeTerminal?.sendText(`wz -e g s`);
+  });
+  context.subscriptions.push(generateService);
+
+
+  const generateMessage = commands.registerCommand("webezy.generateMessage", () => {
+    window.activeTerminal?.sendText(`wz -e g m`);
+  });
+  context.subscriptions.push(generateMessage);
+
+  const generateEnum = commands.registerCommand("webezy.generateEnum", () => {
+    window.activeTerminal?.sendText(`wz -e g e`);
+  });
+  context.subscriptions.push(generateEnum);
+
+  const generateRPC = commands.registerCommand("webezy.generateRPC", () => {
+    window.activeTerminal?.sendText(`wz -e g r`);
+  });
+  context.subscriptions.push(generateRPC);
+
+
+  
   WebezyPanel.currentPanel?.setWebezyModule(<any>webezy);
   
   context.subscriptions.push(
@@ -276,6 +317,9 @@ function colorText(text: string): string {
 function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:WebezyModule,folderPath:string,statusBar:StatusBarItem) {
 
   commands.executeCommand('setContext','webezy.projects', true);
+  if(watcher) {
+    watcher.dispose();
+  }
   let currentProject:any='';
   treeView.onDidChangeSelection(event => {
 
@@ -302,11 +346,16 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
       } catch (error:any) {
         window.showErrorMessage(error.message);
       }
-      // statusBar.text = `$(folder) ${currentProject}`;
-      // statusBar.show();
     }
-    console.log(currentProject)
     context.globalState.update('webezy.projects.active',currentProject);
+    watcher = workspace.createFileSystemWatcher( webezy.projects[currentProject].project?.uri+'/webezy.json');
+    watcher.onDidChange(el => {
+      window.showInformationMessage('Altered webezy.json\n'+el.fsPath);
+      setTimeout(() => {
+        commands.executeCommand('webezy.refreshEntry');
+      },500);
+      
+    });
     activeProjectStatusBar.text = `$(folder) ${currentProject}`;
     let data;
     if (typeof(event.selection[0].data) === 'object') {
@@ -333,4 +382,6 @@ export async function dispose() {
        term.dispose();
     }
   });
+
+  watcher.dispose();
 }

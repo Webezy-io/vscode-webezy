@@ -141,6 +141,41 @@
         "icon": "$(arrow-up)",
         "title": "Get Resource Parent",
         "category": "webezy.io"
+      },
+      {
+        "command": "webezy.run",
+        "title": "Run Current Project Server",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.build",
+        "title": "Build Current Project Resources",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.generateService",
+        "title": "Generate New Service For Current Project",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.generatePackage",
+        "title": "Generate New Package For Current Project",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.generateMessage",
+        "title": "Generate New Message For Current Project",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.generateEnum",
+        "title": "Generate New Enum For Current Project",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.generateRPC",
+        "title": "Generate New RPC For Current Project",
+        "category": "webezy.io"
       }
     ],
     "walkthroughs": [
