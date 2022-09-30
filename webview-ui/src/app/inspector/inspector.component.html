@@ -25,6 +25,9 @@
         <li style="margin-bottom: 0.5rem;" *ngFor="let client of resource.clients">
             <div><i class="codicon codicon-vm"></i>{{client.language | titlecase}}</div>
         </li>
+        <li>
+            <div><i class="codicon codicon-globe" ></i>{{_app.getProject(resource.name).domain}}</div>
+        </li>
     </ul>
     <div *ngIf="resource.type === 'projects'">
         <p style="word-wrap: break-word;"><span class="codicon codicon-folder"></span>{{resource.uri}}</p>
@@ -122,7 +125,7 @@
             <vscode-data-grid-row>
                 <vscode-data-grid-cell grid-column="1">{{resource.name}}</vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">
-                    <vscode-button (click)="revealPackage(resource.fullName.replace('.'+resource.name,''))">
+                    <vscode-button (click)="revealPackage(resource.fullName.split('.')[0]+'.'+resource.fullName.split('.')[1]+'.'+resource.fullName.split('.')[2])">
                         {{resource.fullName.split('.')[1]}}</vscode-button>
                 </vscode-data-grid-cell>
             </vscode-data-grid-row>

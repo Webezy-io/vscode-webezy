@@ -13,6 +13,9 @@ class WebezyModule {
         this.rootDir = rootDir;
         this.refresh();
     }
+    isEmpty() {
+        return (this._projects._defaultProjects === undefined || this._projects._defaultProjects.length === 0) && this.subDirs.length === 0;
+    }
     get projects() {
         return this._projects;
     }
@@ -23,11 +26,17 @@ class WebezyModule {
         this.subDirs = subDirs ? subDirs : this.subDirs;
         this.subDirs.forEach(element => {
             console.log('*', element);
-            let project = (0, index_1.getProject)(vscode_1.Uri.file(this.rootDir + '/' + element + '/webezy.json').fsPath);
-            if (project !== undefined) {
-                if (this._projects !== undefined) {
-                    this._projects[element] = project;
+            try {
+                let project = (0, index_1.getProject)(vscode_1.Uri.file(this.rootDir + '/' + element + '/webezy.json').fsPath);
+                console.log('*', project);
+                if (project !== undefined) {
+                    if (this._projects !== undefined) {
+                        this._projects[element] = project;
+                    }
                 }
+            }
+            catch (error) {
+                vscode_1.window.showErrorMessage(`Some error ${error.message}`);
             }
         });
         this._defaultProjects.forEach(prj => {

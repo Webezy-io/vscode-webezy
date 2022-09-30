@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.activate = void 0;
+exports.dispose = exports.activate = void 0;
 const vscode_1 = require("vscode");
 const webezy_1 = require("./panels/webezy");
 const utilities_1 = require("./utilities");
@@ -59,21 +59,27 @@ function activate(context) {
         }
         vscode_1.window.terminals.forEach(term => {
             let filtered = projects.find(prj => term.name.includes(prj));
-            console.log('*', filtered, term.name);
+            console.log('*', filtered, term.name, terminals.length + '/' + projects.length);
             if (filtered) {
                 terminals.push(term);
             }
-            if (terminals.length === projects.length) {
-                activeTerminal = true;
+            if (terminals.length === projects.length && projects.length > 0) {
+                if (term.name !== 'WZ') {
+                    activeTerminal = true;
+                }
             }
         });
         if (!activeTerminal) {
             yield vscode_1.commands.executeCommand('python.setInterpreter');
-            if (webezy) {
+            console.log(`Empty projects ${webezy === null || webezy === void 0 ? void 0 : webezy.isEmpty()}`);
+            if (webezy && !(webezy === null || webezy === void 0 ? void 0 : webezy.isEmpty())) {
                 for (const prj in webezy.projects) {
                     let prjPath = (_a = webezy.projects[prj].project) === null || _a === void 0 ? void 0 : _a.uri;
                     terminals.push(vscode_1.window.createTerminal({ name: prj, cwd: vscode_1.Uri.file(prjPath), iconPath: vscode_1.Uri.file(context.extensionUri.fsPath + '/favicon.svg') }));
                 }
+            }
+            else {
+                terminals.push(vscode_1.window.createTerminal({ name: 'WZ', iconPath: vscode_1.Uri.file(context.extensionUri.fsPath + '/favicon.svg') }));
             }
         }
         // Create the show hello world command
@@ -104,6 +110,7 @@ function activate(context) {
             // Display a message box to the user
             let folderPath = vscode_1.workspace.rootPath; // get the open folder path
             let webezyProjects = getDirectories(folderPath);
+            console.log(webezyConfig.projects.defaultProjects);
             if (webezy) {
                 if (webezyConfig.projects.defaultProjects.length > 0) {
                     webezy.setDefaultProjects(webezyConfig.projects.defaultProjects);
@@ -114,6 +121,9 @@ function activate(context) {
                     showCollapseAll: true
                 });
                 initTreeView(treeView, context, webezy, folderPath, activeProjectStatusBar);
+            }
+            if (webezyProjects.length === 0 && webezyConfig.projects.defaultProjects.length > 0) {
+                vscode_1.commands.executeCommand('setContext', 'webezy.projects', false);
             }
             // terminal.sendText("echo 'Sent text immediately after creating'");
             vscode_1.window.showInformationMessage('Refreshed projects view');
@@ -258,10 +268,16 @@ function initTreeView(treeView, context, webezy, folderPath, statusBar) {
         var _a;
         if (event.selection[0].data.uri !== undefined) {
             try {
-                if (event.selection[0].data.uri.includes('folderPath')) {
+                if (event.selection[0].data.uri.includes(folderPath)) {
                     let term = vscode_1.window.terminals.find(term => term.name === event.selection[0].data.uri.split(folderPath)[1].split('/')[1]);
-                    currentProject = term === null || term === void 0 ? void 0 : term.name;
-                    term === null || term === void 0 ? void 0 : term.show();
+                    if (term === undefined) {
+                        let prjName = event.selection[0].data.uri.split(folderPath)[1];
+                        currentProject = prjName.split('/').length > 1 ? prjName.split('/')[1] : prjName;
+                    }
+                    else {
+                        currentProject = term === null || term === void 0 ? void 0 : term.name;
+                        term === null || term === void 0 ? void 0 : term.show();
+                    }
                 }
                 else {
                     let defaults = context.globalState.get('webezy.projects.defaultProjects');
@@ -277,6 +293,7 @@ function initTreeView(treeView, context, webezy, folderPath, statusBar) {
             // statusBar.text = `$(folder) ${currentProject}`;
             // statusBar.show();
         }
+        console.log(currentProject);
         context.globalState.update('webezy.projects.active', currentProject);
         activeProjectStatusBar.text = `$(folder) ${currentProject}`;
         let data;
@@ -299,4 +316,14 @@ function initTreeView(treeView, context, webezy, folderPath, statusBar) {
         (_a = webezy_1.WebezyPanel.currentPanel) === null || _a === void 0 ? void 0 : _a.setResource(data);
     });
 }
+function dispose() {
+    return __awaiter(this, void 0, void 0, function* () {
+        vscode_1.window.terminals.forEach(term => {
+            if (term.name === 'WZ') {
+                term.dispose();
+            }
+        });
+    });
+}
+exports.dispose = dispose;
 //# sourceMappingURL=extension.js.map

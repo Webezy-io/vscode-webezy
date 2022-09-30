@@ -55,22 +55,27 @@ export async function activate(context: ExtensionContext) {
     
     let filtered = projects.find(prj => term.name.includes(prj));
 
-    console.log('*',filtered,term.name);
+    console.log('*',filtered,term.name,terminals.length+'/'+projects.length);
     if (filtered) {
       terminals.push(term);
     }
-    if (terminals.length === projects.length) {
-      activeTerminal = true;
+    if (terminals.length === projects.length && projects.length > 0) {
+      if(term.name !== 'WZ') {
+        activeTerminal = true;
+      }
     }
   });
 
   if (!activeTerminal) {
     await commands.executeCommand('python.setInterpreter');
-    if (webezy) {
+    console.log(`Empty projects ${webezy?.isEmpty()}`);
+    if (webezy && !webezy?.isEmpty()) {
       for (const prj in webezy.projects) {
         let prjPath = webezy.projects[prj].project?.uri;
         terminals.push(window.createTerminal({name:prj,cwd:Uri.file(<string>prjPath),iconPath: Uri.file(context.extensionUri.fsPath+'/favicon.svg')}));
       }
+    } else {
+      terminals.push(window.createTerminal({name:'WZ',iconPath: Uri.file(context.extensionUri.fsPath+'/favicon.svg')}));
     }
    
   }
@@ -107,7 +112,8 @@ export async function activate(context: ExtensionContext) {
 		// Display a message box to the user
     let folderPath = workspace.rootPath; // get the open folder path
     let webezyProjects = getDirectories(<string>folderPath);
-    if (webezy) {
+    console.log(webezyConfig.projects.defaultProjects);
+   if (webezy) {
       if (webezyConfig.projects.defaultProjects.length > 0) {
         webezy.setDefaultProjects(webezyConfig.projects.defaultProjects);
       }
@@ -118,8 +124,11 @@ export async function activate(context: ExtensionContext) {
         showCollapseAll:true
       });
       initTreeView(treeView,context,webezy,<any>folderPath,activeProjectStatusBar);
+    
     }
-
+    if(webezyProjects.length === 0 && webezyConfig.projects.defaultProjects.length > 0) {
+      commands.executeCommand('setContext','webezy.projects', false);
+    } 
     // terminal.sendText("echo 'Sent text immediately after creating'");
 		window.showInformationMessage('Refreshed projects view');
 	});
@@ -272,10 +281,15 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
 
     if(event.selection[0].data.uri !== undefined) {
       try {
-        if (event.selection[0].data.uri.includes('folderPath')) {
+        if (event.selection[0].data.uri.includes(folderPath)) {
           let term = window.terminals.find(term => term.name === event.selection[0].data.uri.split(folderPath)[1].split('/')[1]);
-          currentProject=term?.name;
-          term?.show();
+          if(term === undefined) {
+            let prjName = event.selection[0].data.uri.split(folderPath)[1]
+            currentProject = prjName.split('/').length>1 ?prjName.split('/')[1] : prjName ;
+          } else {
+            currentProject=term?.name;
+            term?.show();
+          }
         } else {
           let defaults = <string[]>context.globalState.get('webezy.projects.defaultProjects');
           let project = defaults.find(el => event.selection[0].data.uri.includes(el));
@@ -291,6 +305,7 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
       // statusBar.text = `$(folder) ${currentProject}`;
       // statusBar.show();
     }
+    console.log(currentProject)
     context.globalState.update('webezy.projects.active',currentProject);
     activeProjectStatusBar.text = `$(folder) ${currentProject}`;
     let data;
@@ -309,5 +324,13 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
     }
     currentResourceOnView =event.selection[0];
     WebezyPanel.currentPanel?.setResource(data);
+  });
+}
+
+export async function dispose() {
+  window.terminals.forEach(term => {
+    if(term.name === 'WZ') {
+       term.dispose();
+    }
   });
 }

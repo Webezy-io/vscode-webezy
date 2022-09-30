@@ -1,6 +1,6 @@
 import { Projects, WebezyJson } from "./interfaces";
 import { getProject } from "./index";
-import { Uri } from "vscode";
+import { Uri, window } from "vscode";
 
 
 export class WebezyModule {
@@ -14,6 +14,10 @@ export class WebezyModule {
       this.refresh();
     }
 
+    public isEmpty():boolean {
+      return (this._projects._defaultProjects === undefined || this._projects._defaultProjects.length === 0 ) && this.subDirs.length === 0;
+    }
+
     public get projects() : Projects {
       return <Projects>this._projects;
     }
@@ -25,12 +29,18 @@ export class WebezyModule {
       this.subDirs = subDirs ? subDirs : this.subDirs;
       this.subDirs.forEach(element => {
         console.log('*',element)
-        let project = getProject(Uri.file(this.rootDir+'/'+element+'/webezy.json').fsPath);
-        if (project !== undefined) {
-          if (this._projects !== undefined) {
-            this._projects[element] = project;
+        try {
+          let project = getProject(Uri.file(this.rootDir+'/'+element+'/webezy.json').fsPath);
+          console.log('*',project)
+          if (project !== undefined) {
+            if (this._projects !== undefined) {
+              this._projects[element] = project;
+            }
           }
+        } catch (error:any) {
+          window.showErrorMessage(`Some error ${error.message}`)
         }
+        
       });
       this._defaultProjects.forEach(prj => {
         let project = getProject(Uri.file(prj+'/webezy.json').fsPath);

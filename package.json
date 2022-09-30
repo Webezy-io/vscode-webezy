@@ -75,7 +75,7 @@
     "viewsWelcome": [
       {
         "view": "webezy-projects",
-        "contents": "In order to use webezy.io features, you can open a folder containing a webezy project or create a new project.\n[Open Folder](command:vscode.openFolder)\n[Create Project](command:webezy-code.newProject)\nTo learn more about how to use webezy.io and create projects in VS Code [read our docs](https://www.webezy.io/docs).",
+        "contents": "In order to use webezy.io features, you can open a folder containing a webezy project or create a new project.\n[Open Folder](command:vscode.openFolder)\n[Create Project](command:webezy.newProject)\nTo learn more about how to use webezy.io and create projects in VS Code [read our docs](https://www.webezy.io/docs).",
         "when": "webezy.projects == true"
       }
     ],
