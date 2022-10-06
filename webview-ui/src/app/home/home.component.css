@@ -1,0 +1,25 @@
+.row-space-between {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-content: center;
+}
+
+.main {
+    margin: auto;
+    text-align: center;
+    text-justify: auto;
+    font-size: xx-large;
+}
+
+h2{
+    margin: 1rem;
+}
+
+.column {
+    margin: auto;
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}

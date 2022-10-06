@@ -180,11 +180,10 @@ class WebezyPanel {
         var _a;
         return (_a = this._panel) === null || _a === void 0 ? void 0 : _a.webview;
     }
-    setResource(resource) {
+    setResource(resource, projectName) {
         var _a;
-        console.log(resource);
-        (_a = this._view) === null || _a === void 0 ? void 0 : _a.webview.postMessage({ type: 'event', resource: resource, page: 'Inspector' }).then(res => {
-            console.log(res);
+        (_a = this._view) === null || _a === void 0 ? void 0 : _a.webview.postMessage({ type: 'event', resource: resource, project: projectName, page: 'Inspector' }).then(res => {
+            console.log(`[${res}] Sent to webview: ${JSON.stringify(resource.uri)} - ${projectName}`);
         });
     }
 }

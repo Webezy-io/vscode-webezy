@@ -209,10 +209,9 @@ export class WebezyPanel implements WebviewViewProvider {
     return this._panel?.webview;
   }
 
-  public setResource(resource:any) {
-    console.log(resource);
-    this._view?.webview.postMessage(<VSCodeMessage>{type:'event',resource:resource,page:'Inspector'}).then(res => {
-      console.log(res);
+  public setResource(resource:any,projectName:string) {
+    this._view?.webview.postMessage(<VSCodeMessage>{type:'event',resource:resource,project:projectName,page:'Inspector'}).then(res => {
+      console.log(`[${res}] Sent to webview: ${JSON.stringify(resource.uri)} - ${projectName}`);
     });
   }
 }

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, ThemeIcon } from 'vscode';
+import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, ThemeIcon, workspace } from 'vscode';
 import { WebezyModule } from './webezyJson';
 
 /**
@@ -97,7 +97,7 @@ export async function newProject(context: ExtensionContext,webezy:WebezyModule) 
 			title,
 			step: 4,
 			totalSteps: 6 ,
-			value: state.domain || 'domain',
+			value: state.domain || <string>workspace.getConfiguration('webezy').get('projects.defaultDomain'),
 			prompt: 'Enter your organization domain',
 			validate: validateDomain,
 			shouldResume: shouldResume
@@ -125,7 +125,7 @@ export async function newProject(context: ExtensionContext,webezy:WebezyModule) 
 			title,
 			step: 6,
 			totalSteps: 6 ,
-			value: state.port || '50051',
+			value: state.port || ''+workspace.getConfiguration('webezy').get('projects.defaultPort'),
 			prompt: 'Enter the port number',
 			validate: validatePortNumber,
 			shouldResume: shouldResume

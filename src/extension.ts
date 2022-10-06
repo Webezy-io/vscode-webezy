@@ -1,4 +1,4 @@
-import { commands, TreeView, EventEmitter, ExtensionContext, Uri, window, workspace, Terminal, ThemeIcon, StatusBarItem, StatusBarAlignment, FileSystemWatcher } from "vscode";
+import { commands, TreeView, env, EventEmitter, ExtensionContext, Uri, window, workspace, Terminal, ThemeIcon, StatusBarItem, StatusBarAlignment, FileSystemWatcher, Position, Range, TextEditorRevealType } from "vscode";
 import { WebezyPanel } from "./panels/webezy";
 import { findFile, getConfig } from "./utilities";
 
@@ -11,6 +11,7 @@ import { newProject } from './utilities/newProject';
 let watcher: FileSystemWatcher;
 let activeProjectStatusBar: StatusBarItem;
 let currentResourceOnView:CustomType;
+let treeProvider:ProjectsView;
 export async function activate(context: ExtensionContext) {
   commands.executeCommand('setContext','webezy.projects', false);
   
@@ -35,8 +36,9 @@ export async function activate(context: ExtensionContext) {
       console.log("Loading default projects");
       webezy.refresh();
     }
+    treeProvider = new ProjectsView(context.extensionUri.fsPath,webezy.projects)
     treeView = window.createTreeView('webezy-projects', {
-      treeDataProvider: new ProjectsView(context.extensionUri.fsPath,webezy.projects),
+      treeDataProvider: treeProvider,
       showCollapseAll:true
     });
     initTreeView(treeView,context,webezy,<any>folderPath,activeProjectStatusBar);
@@ -80,7 +82,6 @@ export async function activate(context: ExtensionContext) {
     }
    
   }
-
   // Create the show hello world command
   WebezyPanel.render(context.extensionUri);
 
@@ -91,12 +92,18 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(showHelloWorldCommand);
   
   const runServer = commands.registerCommand("webezy.run", () => {
-    window.activeTerminal?.sendText(`wz --run-server`);
+    window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} --run-server`);
   });
   context.subscriptions.push(runServer);
 
+  const stopServer = commands.registerCommand("webezy.stop", () => {
+    window.activeTerminal?.sendText('\u0003');
+  });
+  context.subscriptions.push(stopServer);
+
+
   const build = commands.registerCommand("webezy.build", () => {
-    window.activeTerminal?.sendText(`wz --build`);
+    window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} --build`);
   });
   context.subscriptions.push(build);
 
@@ -106,42 +113,95 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(showCurrentVersion);
 
   const generatePackage = commands.registerCommand("webezy.generatePackage", () => {
-    window.activeTerminal?.sendText(`wz -e g p`);
+    window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} ${webezyConfig.cli.autoExpand ? '-e' : ''} g p ${webezyConfig.cli.autoBuild && checkPreBuild(<WebezyModule>webezy,context) ? '--build' : ''}`);
   });
   context.subscriptions.push(generatePackage);
 
   const generateService = commands.registerCommand("webezy.generateService", () => {
-    window.activeTerminal?.sendText(`wz -e g s`);
+    window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} ${webezyConfig.cli.autoExpand ? '-e' : ''} g s ${webezyConfig.cli.autoBuild && checkPreBuild(<WebezyModule>webezy,context) ? '--build' : ''}`);
   });
   context.subscriptions.push(generateService);
 
-
-  const generateMessage = commands.registerCommand("webezy.generateMessage", () => {
-    window.activeTerminal?.sendText(`wz -e g m`);
+  const generateMessage = commands.registerCommand("webezy.generateMessage", (parent) => {
+    window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} ${webezyConfig.cli.autoExpand ? '-e' : ''} g m ${parent ? '-p '+parent : ''} ${webezyConfig.cli.autoBuild && checkPreBuild(<WebezyModule>webezy,context) ? '--build' : ''}`);
   });
   context.subscriptions.push(generateMessage);
 
-  const generateEnum = commands.registerCommand("webezy.generateEnum", () => {
-    window.activeTerminal?.sendText(`wz -e g e`);
+  const generateEnum = commands.registerCommand("webezy.generateEnum", (parent) => {
+    window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} ${webezyConfig.cli.autoExpand ? '-e' : ''} g e ${parent ? '-p '+parent : ''} ${webezyConfig.cli.autoBuild && checkPreBuild(<WebezyModule>webezy,context)  ? '--build' : ''}`);
   });
   context.subscriptions.push(generateEnum);
 
-  const generateRPC = commands.registerCommand("webezy.generateRPC", () => {
-    window.activeTerminal?.sendText(`wz -e g r`);
+  const generateRPC = commands.registerCommand("webezy.generateRPC", (parent) => {
+    window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} ${webezyConfig.cli.autoExpand ? '-e' : ''} g r ${parent ? '-p '+parent : ''} ${webezyConfig.cli.autoBuild && checkPreBuild(<WebezyModule>webezy,context) ? '--build' : ''}`);
   });
   context.subscriptions.push(generateRPC);
 
+  const importPackage = commands.registerCommand("webezy.importPackage", (importStatment) => {
+    window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} package ${importStatment}`);
+  });
+  context.subscriptions.push(importPackage);
 
+  const removePackage = commands.registerCommand("webezy.removePackage", (statment) => {
+    window.activeTerminal?.sendText(`wz  --loglevel ${webezyConfig.cli.logLevel} package ${statment} --remove`);
+  });
+  context.subscriptions.push(removePackage);
+
+
+  const addMessageField = commands.registerCommand("webezy.addMessageField", (message) => {
+    window.activeTerminal?.sendText(`wz  --loglevel ${webezyConfig.cli.logLevel} edit ${message} --action modify --sub-action fields`);
+  });
+  context.subscriptions.push(addMessageField);
+
+
+  const addEnumValue = commands.registerCommand("webezy.addEnumValue", (message) => {
+    window.activeTerminal?.sendText(`wz  --loglevel ${webezyConfig.cli.logLevel} edit ${message} --action modify --sub-action values`);
+  });
+  context.subscriptions.push(addEnumValue);
   
+  const copy = commands.registerCommand("webezy.copy", (copyMsg) => {
+    env.clipboard.writeText(copyMsg).then(res => {
+      window.showInformationMessage(`Copied ${copyMsg}`);
+    });
+  });
+  context.subscriptions.push(copy);
+
+  const openCode = commands.registerCommand("webezy.openCode", (resource) => {
+    console.log(resource);
+    if (resource.kind === 'Webezy.descriptor/method') {
+      let svcLanguage= webezy?.projects[<string>context.globalState.get('webezy.projects.active')].project?.server?.language ? <string><unknown>webezy?.projects[<string>context.globalState.get('webezy.projects.active')].project?.server?.language : 'python'; 
+      for (const svc in webezy?.projects[<string>context.globalState.get('webezy.projects.active')].services) {
+        let tempResource = webezy?.projects[<string>context.globalState.get('webezy.projects.active')].services[svc].methods.find(el => el.name === resource.name)
+        if (tempResource !== undefined) {
+          
+          workspace.openTextDocument(
+            Uri.file(folderPath+'/'+context.globalState.get('webezy.projects.active')+'/services/'+svc+'.'+fileSuffix(svcLanguage))).then(doc => {
+              window.showTextDocument(doc).then(res => {
+                console.log(res);
+              });
+          });
+        }
+      }
+      
+    }
+  });
+  context.subscriptions.push(openCode);
+
+
+  const removeResource = commands.registerCommand("webezy.removeResource", (fullName) => {
+    window.activeTerminal?.sendText(`wz  --loglevel ${webezyConfig.cli.logLevel} edit ${fullName} --action remove`);
+  });
+  context.subscriptions.push(removeResource);
+
   WebezyPanel.currentPanel?.setWebezyModule(<any>webezy);
   
   context.subscriptions.push(
     window.registerWebviewViewProvider('webezy-inspector', <any>WebezyPanel.currentPanel));
-  if(WebezyPanel.generatorPanel) {
-    WebezyPanel.generatorPanel._page = 'Generator';
-  }
-  context.subscriptions.push(
-      window.registerWebviewViewProvider('webezy-generator', <any>WebezyPanel.generatorPanel));
+  // if(WebezyPanel.generatorPanel) {
+  //   WebezyPanel.generatorPanel._page = 'Generator';
+  // }
+  // context.subscriptions.push(
+  //     window.registerWebviewViewProvider('webezy-generator', <any>WebezyPanel.generatorPanel));
   if(WebezyPanel.helpPanel) {
     WebezyPanel.helpPanel._page = 'Help';
   }
@@ -159,9 +219,9 @@ export async function activate(context: ExtensionContext) {
         webezy.setDefaultProjects(webezyConfig.projects.defaultProjects);
       }
       webezy.refresh(webezyProjects);
-  
+      treeProvider = new ProjectsView(context.extensionUri.fsPath,webezy.projects);
       treeView = window.createTreeView('webezy-projects', {
-        treeDataProvider: new ProjectsView(context.extensionUri.fsPath,webezy.projects),
+        treeDataProvider:treeProvider,
         showCollapseAll:true
       });
       initTreeView(treeView,context,webezy,<any>folderPath,activeProjectStatusBar);
@@ -201,7 +261,7 @@ export async function activate(context: ExtensionContext) {
               clients = clients + ' '+ c.label.toLowerCase();
             });
             console.log('Running ->',`wz n ${res.name} --server-language ${res.serverLanguage.label.toLowerCase()} --clients ${clients} --host ${res.host} --port ${res.port} --domain ${res.domain} --path ${folderPath}`);
-            window.activeTerminal?.sendText(`wz n ${res.name} --server-language ${res.serverLanguage.label.toLowerCase()} --clients ${clients} --host ${res.host} --port ${res.port} --domain ${res.domain} --path ${folderPath}`);
+            window.activeTerminal?.sendText(`wz --loglevel ${webezyConfig.cli.logLevel} n ${res.name} --server-language ${res.serverLanguage.label.toLowerCase()} --clients ${clients} --host ${res.host} --port ${res.port} --domain ${res.domain} --path ${folderPath}`);
             setTimeout(() => {
               commands.executeCommand('webezy.refreshEntry');
             },2000);
@@ -224,12 +284,13 @@ export async function activate(context: ExtensionContext) {
         msg = webezy?.projects[currentActive].packages[pkgName].messages.find(msg => msg.fullName === resource);
       }
 
-      if ( webezy?.projects[currentActive].packages[pkgName].enums && !msg) {
+      if (webezy?.projects[currentActive].packages[pkgName].enums && !msg) {
         enm = webezy?.projects[currentActive].packages[pkgName].enums.find(enm => enm.fullName === resource);
+        treeView.reveal({label:resource.split('.').pop(),data:enm,kind:'Enum'});
       } else {
         treeView.reveal({label:resource.split('.').pop(),data:msg,kind:'Message'});
       }
-      console.log(msg,enm);
+
     } else if(resource.split('.').length === 3) {
       let pkgName = `protos/${resource.split('.')[2]}/${resource.split('.')[1]}.proto`;
       if (webezy?.projects[currentActive].packages[pkgName]) {
@@ -267,6 +328,8 @@ export async function activate(context: ExtensionContext) {
       window.activeTerminal?.sendText(`wz n ${res.name} --server-language ${res.serverLanguage.label.toLowerCase()} --clients ${clients} --host ${res.host} --port ${res.port} --domain ${res.domain} --path ${folderPath}`);
       setTimeout(() => {
         commands.executeCommand('webezy.refreshEntry');
+        webezy?.refresh();
+        WebezyPanel.currentPanel?.setWebezyModule(<any>webezy);
       },2000);
     });
   }));
@@ -285,7 +348,20 @@ export async function activate(context: ExtensionContext) {
           treeView.reveal(parent);
         }
       }
-    } else if(currentResourceOnView.kind === 'RPC') {
+    } else if(currentResourceOnView.kind === 'Enum') {
+      let pkgName = `protos/${currentResourceOnView.data.fullName.split('.')[2]}/${currentResourceOnView.data.fullName.split('.')[1]}.proto`
+      let pkg = webezy?.projects[currentPrj].packages[pkgName];
+      if(pkg) {
+        let enm = pkg.enums.find(el => el.name === currentResourceOnView.label);
+        if(enm ) {
+          parent = {label: pkg.name, data: pkg, kind: 'Package'};
+          treeView.reveal(parent);
+        }
+      }
+    } 
+    else if(currentResourceOnView.kind === 'RPC') {
+      let svcName = `protos/${currentResourceOnView.data.fullName.split('.')[2]}/${currentResourceOnView.data.fullName.split('.')[1]}.proto`
+
       window.showErrorMessage("Not supported yet");
     } 
 
@@ -297,22 +373,6 @@ const getDirectories = (source: string) =>
     .filter(dirent => dirent.isDirectory() && findFile(Uri.joinPath(Uri.file(source), dirent.name, 'webezy.json').fsPath) )
     .map(dirent => dirent.name);
 
-function colorText(text: string): string {
-  let output = '';
-  let colorIndex = 1;
-  for (let i = 0; i < text.length; i++) {
-    const char = text.charAt(i);
-    if (char === ' ' || char === '\r' || char === '\n') {
-      output += char;
-    } else {
-      output += `\x1b[3${colorIndex++}m${text.charAt(i)}\x1b[0m`;
-      if (colorIndex > 6) {
-        colorIndex = 1;
-      }
-    }
-  }
-  return output;
-}
 
 function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:WebezyModule,folderPath:string,statusBar:StatusBarItem) {
 
@@ -322,14 +382,17 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
   }
   let currentProject:any='';
   treeView.onDidChangeSelection(event => {
-
     if(event.selection[0].data.uri !== undefined) {
+      console.log(event);
       try {
         if (event.selection[0].data.uri.includes(folderPath)) {
           let term = window.terminals.find(term => term.name === event.selection[0].data.uri.split(folderPath)[1].split('/')[1]);
           if(term === undefined) {
+            console.log(window.activeTerminal?.creationOptions.iconPath?.toString())
             let prjName = event.selection[0].data.uri.split(folderPath)[1]
             currentProject = prjName.split('/').length>1 ?prjName.split('/')[1] : prjName ;
+            window.createTerminal({name:currentProject,cwd:Uri.file(<string>event.selection[0].data.uri),iconPath: Uri.file(context.extensionUri.fsPath+'/favicon.svg')});
+
           } else {
             currentProject=term?.name;
             term?.show();
@@ -347,20 +410,27 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
         window.showErrorMessage(error.message);
       }
     }
+    if(currentProject=== undefined) {
+      for (const prj in webezy.projects) {
+        let project = webezy.projects[prj];
+        if(project.services[event.selection[0].data] !== undefined) {
+          currentProject= project.project?.name;
+        } else if (project.packages[event.selection[0].data] !== undefined) {
+          currentProject= project.project?.name;
+        }
+      }
+    }
+   
     context.globalState.update('webezy.projects.active',currentProject);
-    watcher = workspace.createFileSystemWatcher( webezy.projects[currentProject].project?.uri+'/webezy.json');
-    watcher.onDidChange(el => {
-      window.showInformationMessage('Altered webezy.json\n'+el.fsPath);
-      setTimeout(() => {
-        commands.executeCommand('webezy.refreshEntry');
-      },500);
-      
-    });
+
+
     activeProjectStatusBar.text = `$(folder) ${currentProject}`;
-    let data;
+    let data:any;
     if (typeof(event.selection[0].data) === 'object') {
       data = event.selection[0].data;
     } else {
+      console.log(webezy.projects[currentProject])
+
       data = webezy.projects[currentProject].packages[event.selection[0].data];
       if (data === undefined) {
         data = webezy.projects[currentProject].services[event.selection[0].data];
@@ -371,8 +441,152 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
     } else {
       commands.executeCommand('setContext','webezy.hasParent',false);
     }
+
     currentResourceOnView =event.selection[0];
-    WebezyPanel.currentPanel?.setResource(data);
+    WebezyPanel.currentPanel?.setResource(data,<string>context.globalState.get('webezy.projects.active'));
+
+    watcher = workspace.createFileSystemWatcher( webezy.projects[currentProject].project?.uri+'/webezy.json');
+    watcher.onDidChange(el => {
+      window.showInformationMessage('Altered webezy.json\n'+el.fsPath);
+      setTimeout(() => {
+        webezy.refresh();
+        commands.executeCommand('webezy.refreshEntry');
+        if (typeof(currentResourceOnView.data) === 'object') {
+          if(currentResourceOnView.kind === 'Package') {
+            let packageName = `protos/${currentResourceOnView.data.package.split('.')[2]}/${currentResourceOnView.data.package.split('.')[1]}.proto`;
+            data = webezy.projects[currentProject].packages[packageName];
+          } else if(currentResourceOnView.kind === 'Message') {
+            let packageName = `protos/${currentResourceOnView.data.fullName.split('.')[2]}/${currentResourceOnView.data.fullName.split('.')[1]}.proto`;
+            data = webezy.projects[currentProject].packages[packageName].messages.filter(msg => msg.fullName === currentResourceOnView.data.fullName)[0];
+          } else if(currentResourceOnView.kind === 'RPC') {
+            data = webezy.projects[currentProject].services[currentResourceOnView.data.fullName.split('.')[1]].methods.filter(el => el.fullName === currentResourceOnView.data.fullName);
+          } else if (currentResourceOnView.kind === 'Enum') {
+            let packageName = `protos/${currentResourceOnView.data.fullName.split('.')[2]}/${currentResourceOnView.data.fullName.split('.')[1]}.proto`;
+            data = webezy.projects[currentProject].packages[packageName].enums.filter(el => el.fullName === currentResourceOnView.data.fullName)[0];
+          } else if (currentResourceOnView.kind === 'Project') {
+            data = webezy.projects[currentProject];
+          }
+        } else {
+          console.log(webezy.projects[currentProject])
+    
+          data = webezy.projects[currentProject].packages[currentResourceOnView.data];
+          if (data === undefined) {
+            data = webezy.projects[currentProject].services[currentResourceOnView.data];
+          }
+        }
+        console.log('Refreshing data '+JSON.stringify(data));
+        WebezyPanel.currentPanel?.setWebezyModule(<any>webezy);
+
+        WebezyPanel.currentPanel?.setResource(data,<string>context.globalState.get('webezy.projects.active'));
+
+      },500);
+    });
+
+    console.log(event.selection[0].data.kind,event.selection[0].data.type);
+    try {
+      if(event.selection[0].data.kind) {
+        console.log("Selected "+event.selection[0].data.kind);
+        if(event.selection[0].data.type === 'projects') {
+          workspace.openTextDocument(Uri.file(folderPath+'/'+context.globalState.get('webezy.projects.active')+'/webezy.json')).then(doc => {
+            if (doc) {
+              window.showTextDocument(doc);
+            } else {
+              window.showErrorMessage(`Error while trying to open -> ${event.selection[0].data.uri}`)
+            }
+          });
+        } else if(event.selection[0].data.type === 'descriptors') {
+          if(event.selection[0].kind === 'Message') {
+            workspace.openTextDocument(Uri.file(folderPath+'/'+context.globalState.get('webezy.projects.active')+'/protos/'+event.selection[0].data.fullName.split('.')[1]+'.proto')).then(doc => {
+              if (doc) {
+                window.showTextDocument(doc).then(res => {
+                  let pos = window.activeTextEditor?.document.getText().split('\n').findIndex((v,i) => v.includes(`message ${event.selection[0].data.name}`))
+                  pos = pos ? pos : 0;
+                  let posEnd = pos ? pos + event.selection[0].data.fields.length : 0
+                  window.activeTextEditor?.revealRange(new Range(new Position(<number>pos,9),new Position(posEnd,0)),TextEditorRevealType.InCenter);
+                  let isAfter = window.activeTextEditor?.selection.active.isAfter(new Position(<number>pos,0));
+                  let diff = 0;
+
+                  if(isAfter) {
+                    diff = window.activeTextEditor?.selection.start.line ? window.activeTextEditor?.selection.start.line - pos : 0 + pos;
+                  } else {
+                    diff = window.activeTextEditor?.selection.start.line ? pos - window.activeTextEditor?.selection.start.line  : 0 + pos;
+                  }
+                  commands.executeCommand("cursorMove",
+                  {
+                      to: isAfter ? 'up' : 'down', by:'wrappedLine', value: diff
+                  });
+                });
+              } else {
+                window.showErrorMessage(`Error while trying to open -> ${event.selection[0].data.uri}`)
+              }
+            });
+          } else if(event.selection[0].kind === 'Enum') {
+            workspace.openTextDocument(Uri.file(folderPath+'/'+context.globalState.get('webezy.projects.active')+'/protos/'+event.selection[0].data.fullName.split('.')[1]+'.proto')).then(doc => {
+              if (doc) {
+                window.showTextDocument(doc).then(res => {
+                  let pos = window.activeTextEditor?.document.getText().split('\n').findIndex((v,i) => v.includes(`enum ${event.selection[0].data.name}`))
+                  pos = pos ? pos : 0;
+                  let posEnd = pos ? pos + event.selection[0].data.values.length : 0
+                  window.activeTextEditor?.revealRange(new Range(new Position(<number>pos,6),new Position(posEnd,0)),TextEditorRevealType.InCenter);
+                  let isAfter = window.activeTextEditor?.selection.active.isAfter(new Position(<number>pos,0));
+                  let diff = 0;
+
+                  if(isAfter) {
+                    diff = window.activeTextEditor?.selection.start.line ? window.activeTextEditor?.selection.start.line - pos : 0 + pos;
+                  } else {
+                    diff = window.activeTextEditor?.selection.start.line ? pos - window.activeTextEditor?.selection.start.line  : 0 + pos;
+                  }
+                  commands.executeCommand("cursorMove",
+                  {
+                      to: isAfter ? 'up' : 'down', by:'wrappedLine', value: diff
+                  });
+                });
+              } else {
+                window.showErrorMessage(`Error while trying to open -> ${event.selection[0].data.uri}`);
+              }
+            });
+          } else if(event.selection[0].kind === 'RPC') {
+            let serviceName;
+            for (const svc in webezy.projects[currentProject].services) {
+              let s = webezy.projects[currentProject].services[svc].methods.find(el => el.name ===event.selection[0].data.name);
+              if (s) {
+                serviceName = svc;
+              }
+            }
+            workspace.openTextDocument(Uri.file(folderPath+'/'+context.globalState.get('webezy.projects.active')+'/protos/'+serviceName+'.proto')).then(doc => {
+              if (doc) {
+                window.showTextDocument(doc).then(res => {
+                  let pos = window.activeTextEditor?.document.getText().split('\n').findIndex((v,i) => v.includes(`rpc ${event.selection[0].data.name}`))
+                  pos = pos ? pos : 0;
+                  window.activeTextEditor?.revealRange(new Range(new Position(<number>pos,9),new Position(pos,event.selection[0].data.name.length)),TextEditorRevealType.InCenter);
+                  let isAfter = window.activeTextEditor?.selection.active.isAfter(new Position(<number>pos,0));
+                  let diff = 0;
+
+                  if(isAfter) {
+                    diff = window.activeTextEditor?.selection.start.line ? window.activeTextEditor?.selection.start.line - pos : 0 + pos;
+                  } else {
+                    diff = window.activeTextEditor?.selection.start.line ? pos - window.activeTextEditor?.selection.start.line  : 0 + pos;
+                  }
+                  commands.executeCommand("cursorMove",
+                  {
+                      to: isAfter ? 'up' : 'down', by:'wrappedLine', value: diff
+                  });
+                });
+              } else {
+                window.showErrorMessage(`Error while trying to open -> ${event.selection[0].data.uri}`)
+              }
+            });
+          }
+  
+        } 
+      } else {
+        console.log("Selected "+event.selection[0].data.type);
+      }
+    } catch (error:any) {
+      console.log(error)
+      window.showErrorMessage("Please build project to view code")
+    }
+    
   });
 }
 
@@ -384,4 +598,45 @@ export async function dispose() {
   });
 
   watcher.dispose();
+}
+
+function checkPreBuild(webezy:WebezyModule,context:ExtensionContext):boolean {
+  let packagesReady = false;
+  let servicesReady = false;
+
+  if (webezy?.projects[<string>context.globalState.get('webezy.projects.active')].packages !== undefined && webezy?.projects[<string>context.globalState.get('webezy.projects.active')].services !== undefined) {
+    for (const pkg in webezy?.projects[<string>context.globalState.get('webezy.projects.active')].packages) {
+      if (webezy?.projects[<string>context.globalState.get('webezy.projects.active')].packages[pkg].messages !== undefined) {
+        if (webezy?.projects[<string>context.globalState.get('webezy.projects.active')].packages[pkg].messages.length>0) {
+          packagesReady = true;
+        } else {
+          packagesReady = false;
+        }
+      } else {
+        packagesReady = false;
+      }
+    }
+  
+    for (const svc in webezy?.projects[<string>context.globalState.get('webezy.projects.active')].services) {
+      if(webezy?.projects[<string>context.globalState.get('webezy.projects.active')].services[svc].methods !== undefined) {
+        if(webezy?.projects[<string>context.globalState.get('webezy.projects.active')].services[svc].methods.length>0) {
+          servicesReady = true;
+        } else {
+          servicesReady = false;
+        }
+      } else {
+        servicesReady = false;
+      }
+    }
+  } 
+  return servicesReady && packagesReady;
+}
+
+function fileSuffix(language:string):string {
+  let suffix = 'py';
+  if (language === 'python') {
+    suffix = 'py';
+  }
+
+  return suffix;
 }

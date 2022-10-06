@@ -1,10 +1,20 @@
 .row {
     display: flex;
     flex-direction: row;
-    justify-content: space-evenly;
+    justify-content: flex-end;
 }
 .row-space-between {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+}
+
+.copy {
+    margin-left: 1rem;
+}
+  
+.row-start {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
 }

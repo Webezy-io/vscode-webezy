@@ -57,6 +57,20 @@ class ProjectsView {
                 }
             });
         }
+        else if (element.kind === 'Enum') {
+            this._projects.forEach(prj => {
+                var _a;
+                if (prj.children) {
+                    let pkg = prj.children.filter(el => el.kind === 'Package').find(el => el.label === element.data.fullName.split('.')[1]);
+                    let enums = (_a = pkg === null || pkg === void 0 ? void 0 : pkg.children) === null || _a === void 0 ? void 0 : _a.filter(enm => enm.kind === 'Enum');
+                    if (enums) {
+                        if (enums.find(enm => enm.label === element.label)) {
+                            parent = pkg;
+                        }
+                    }
+                }
+            });
+        }
         return parent;
     }
     parseProjects(projects) {
@@ -146,6 +160,9 @@ class Resource extends vscode_1.TreeItem {
         }
         else if (this.kind === 'RPC') {
             this.iconPath = new vscode_1.ThemeIcon("json");
+        }
+        else if (this.kind === 'Enum') {
+            this.iconPath = new vscode_1.ThemeIcon("symbol-enum");
         }
     }
 }

@@ -56,6 +56,18 @@ export class ProjectsView implements TreeDataProvider<CustomType> {
                     });
                 }
             });
+        } else if(element.kind === 'Enum') {
+            this._projects.forEach(prj => {
+                if (prj.children) {
+                    let pkg = prj.children.filter(el => el.kind === 'Package').find(el => el.label === element.data.fullName.split('.')[1]);
+                    let enums = pkg?.children?.filter(enm => enm.kind === 'Enum');
+                    if(enums) {
+                        if(enums.find(enm => enm.label === element.label)) {
+                            parent = pkg;
+                        }
+                    }
+                }
+            });
         }
         return parent;
     }
@@ -153,6 +165,8 @@ class Resource extends TreeItem {
 			this.iconPath = new ThemeIcon("mail");
 		} else if (this.kind === 'RPC') {
 			this.iconPath = new ThemeIcon("json");
-		}
+		} else if (this.kind === 'Enum') {
+            this.iconPath = new ThemeIcon("symbol-enum");
+        }
 	}
 }

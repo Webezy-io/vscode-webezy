@@ -1,6 +1,7 @@
 export interface VSCodeMessage {
     type: 'init' | 'event';
     page: string;
+    project:string;
     resource: any;
 }
 
@@ -101,6 +102,7 @@ export interface ServiceDescriptor {
     enums: Enum[];
     extensions: { [key: string]: any };
     description: string;
+    type: string;
   }
 
   export interface Descriptor {
@@ -222,5 +224,7 @@ export interface Projects {
 }
 
 export interface VSCodeWebezyConfig {
-  projects: { defaultProjects : string[] }
+  projects: { defaultProjects : string[] , defaultPort:number, defaultDomain:string},
+  cli: { logLevel: string, autoExpand: boolean, autoBuild: boolean }
+
 }

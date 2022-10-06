@@ -62,11 +62,6 @@
         },
         {
           "type": "webview",
-          "id": "webezy-generator",
-          "name": "Generator"
-        },
-        {
-          "type": "webview",
           "id": "webezy-help",
           "name": "Help"
         }
@@ -176,6 +171,46 @@
         "command": "webezy.generateRPC",
         "title": "Generate New RPC For Current Project",
         "category": "webezy.io"
+      },
+      {
+        "command": "webezy.importPackage",
+        "title": "Import Package Into Other Package / Service",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.removePackage",
+        "title": "Remove Package from Other Package / Service",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.addMessageField",
+        "title": "Add a field to message",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.addEnumValue",
+        "title": "Add a value to enum",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.stop",
+        "title": "Stop server process",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.copy",
+        "title": "Copy to clipboard",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.removeResource",
+        "title": "Remove webezy.io resource from current project",
+        "category": "webezy.io"
+      },
+      {
+        "command": "webezy.openCode",
+        "title": "Open a code file for the resource",
+        "category": "webezy.io"
       }
     ],
     "walkthroughs": [
@@ -225,6 +260,50 @@
               "type": "string",
               "pattern": "^/|(/[a-zA-Z0-9_-]+)+$"
             }
+          },
+          "webezy.projects.defaultDomain": {
+            "type": "string",
+            "order": 2,
+            "markdownDescription": "The default domain that will be assigned to new projects",
+            "default": "domain"
+          },
+          "webezy.projects.defaultPort": {
+            "type": "number",
+            "markdownDescription": "The default port that will be assigned to new projects",
+            "default": 50051
+          }
+        }
+      },
+      {
+        "id": "webezyCli",
+        "title": "CLI",
+        "order": 2,
+        "properties": {
+          "webezy.cli.autoExpand": {
+            "type": "boolean",
+            "order": 1,
+            "uniqueItems": true,
+            "markdownDescription": "Will change the default --expand argument to every cli command that support it",
+            "default":true
+          },
+          "webezy.cli.logLevel": {
+            "type": "string",
+            "order": 1,
+            "default": "ERROR",
+            "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
+            "enumDescriptions": [
+              "Will log all DEBUG logs and above",
+              "Will log all INFO logs and above",
+              "Will log all WARNING logs and above",
+              "Will log only ERROR logs"
+            ]
+          },
+          "webezy.cli.autoBuild": {
+            "type": "boolean",
+            "order": 1,
+            "uniqueItems": true,
+            "markdownDescription": "Will try to build resources after newly created resource",
+            "default":true
           }
         }
       }

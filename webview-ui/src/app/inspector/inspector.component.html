@@ -1,23 +1,32 @@
-<h4>{{resource ? resource.name : 'Choose a resource in the projects view above.'}}</h4>
+<div class="row-start">
+    <div>
+        <h4>{{resource ? resource.name : 'Choose a resource in the projects view above.'}}</h4>
+    </div>
+    <vscode-button class="copy" appearance="icon" (click)="copy(resource.fullName ? resource.fullName : resource.name )"><span class="codicon codicon-clippy"></span></vscode-button>    
+</div>
+
 <div class="row">
     <vscode-tag *ngIf="resource !== undefined && resource.messages === undefined && resource.methods === undefined">{{
-        resource.type === 'projects' ?
+        resource.type === 'projects' || resource.type === 'services' || resource.type === 'packages' ?
         resource.type : resource.kind.split('/')[1] }}</vscode-tag>
-    <vscode-tag *ngIf="resource !== undefined && resource.methods === undefined && resource.kind === undefined">Package
-    </vscode-tag>
-    <vscode-tag *ngIf="resource !== undefined && resource.messages === undefined && resource.kind === undefined">Service
-    </vscode-tag>
-
+    
     <vscode-button style="margin-left: 1rem;" disabled>Edit<span slot="start" class="codicon codicon-edit"></span>
     </vscode-button>
     <vscode-button style="margin-left: auto;" appearance="icon" disabled><span class="codicon codicon-json"></span>
     </vscode-button>
-    <vscode-button appearance="icon" disabled><span class="codicon codicon-file"></span></vscode-button>
+    <vscode-button appearance="icon" *ngIf="!resource.kind.includes('message')" (click)="openCodeFile()"><span class="codicon codicon-file"></span></vscode-button>
 </div>
 <vscode-divider></vscode-divider>
 <div>
 
     <!-- Project -->
+    <div class="row">
+        <vscode-button *ngIf="resource.type === 'projects'" style="margin-right: 1rem;" (click)="build()" >Build</vscode-button>
+        <vscode-button *ngIf="resource.type === 'projects' && serverRunMode === false" appearance="icon" (click)="run()" ><span class="codicon codicon-play"></span></vscode-button>
+        <vscode-button *ngIf="resource.type === 'projects' && serverRunMode === true" appearance="icon" (click)="stop()" ><span class="codicon codicon-debug-stop"></span></vscode-button>
+    
+    </div>
+
     <ul style="list-style: none;" *ngIf="resource.type === 'projects'">
         <li style="margin-bottom: 0.5rem;">
             <div><i class="codicon codicon-server"></i>{{resource.server.language | titlecase}}</div>
@@ -26,12 +35,18 @@
             <div><i class="codicon codicon-vm"></i>{{client.language | titlecase}}</div>
         </li>
         <li>
-            <div><i class="codicon codicon-globe" ></i>{{_app.getProject(resource.name).domain}}</div>
+            <div><i class="codicon codicon-globe" ></i>{{_app.getProject(resource.name) ? _app.getProject(resource.name).domain : 'Unknown'}}</div>
         </li>
     </ul>
     <div *ngIf="resource.type === 'projects'">
         <p style="word-wrap: break-word;"><span class="codicon codicon-folder"></span>{{resource.uri}}</p>
-        <h3><i class="codicon codicon-server" style="margin-right: 0.5rem;"></i>Services</h3>
+       
+        <div class="row-space-between" style="margin-top: 2rem;">
+            <h3><i class="codicon codicon-server" style="margin-right: 0.5rem;"></i>Services</h3>
+            <vscode-button (click)="generateService()" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+        </div>
         <vscode-divider></vscode-divider>
 
         <vscode-data-grid grid-template-columns="1fr 1fr" aria-label="Basic">
@@ -41,13 +56,18 @@
             </vscode-data-grid-row>
             <vscode-data-grid-row *ngFor="let svc of _app.listServices(resource.name) | keyvalue">
                 <vscode-data-grid-cell grid-column="1">
-                    <vscode-button (click)="revealService(svc.key)">{{svc.key}}</vscode-button>
+                    <vscode-button style="width: 100%;" (click)="revealService(svc.key)">{{svc.key}}</vscode-button>
                 </vscode-data-grid-cell>
-                <vscode-data-grid-cell grid-column="2">{{svc.value.methods.length}}</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">{{svc.value.methods ? svc.value.methods.length : 0}}</vscode-data-grid-cell>
             </vscode-data-grid-row>
+           
         </vscode-data-grid>
-
-        <h3><i class="codicon codicon-package" style="margin-right: 0.5rem;"></i>Packages</h3>
+        <div class="row-space-between">
+            <h3><i class="codicon codicon-package" style="margin-right: 0.5rem;"></i>Packages</h3>
+            <vscode-button (click)="generatePackage()" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+        </div>
         <vscode-divider></vscode-divider>
         <vscode-data-grid grid-template-columns="1fr 1fr" aria-label="Basic">
             <vscode-data-grid-row row-type="header">
@@ -57,10 +77,11 @@
             <vscode-data-grid-row *ngFor="let pkg of _app.listPackages(resource.name) | keyvalue">
                 <vscode-data-grid-cell grid-column="1">
                     <vscode-button
+                        style="width: 100%;"
                         (click)="revealPackage(resource.domain+'.'+pkg.key.split('/')[2].split('.')[0]+'.'+pkg.key.split('/')[1])">
-                        {{pkg.key.split('/')[pkg.key.split('/').length -1].split('.')[0]}}</vscode-button>
+                        {{pkg.key.split('/')[pkg.key.split('/').length -1].split('.')[0]}} </vscode-button>
                 </vscode-data-grid-cell>
-                <vscode-data-grid-cell grid-column="2">{{pkg.value.messages.length}}</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">{{pkg.value.messages ? pkg.value.messages.length : 0}}</vscode-data-grid-cell>
             </vscode-data-grid-row>
         </vscode-data-grid>
 
@@ -73,34 +94,117 @@
     </div>
 
     <!-- Package -->
-    <div *ngIf=" resource.methods === undefined && resource.kind === undefined">
+    <div *ngIf=" resource.type === 'packages'">
         <p *ngIf="resource.description">{{resource.description}}</p>
-        <vscode-data-grid grid-template-columns="1fr 1fr" aria-label="Basic">
+        <div class="row-space-between">
+            <h3>Messages</h3>
+            <vscode-button (click)="generateMessage(resource.package)" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+        </div>
+        <vscode-divider></vscode-divider>
+        <vscode-data-grid grid-template-columns="1fr 0.5fr 30px" aria-label="Basic">
             <vscode-data-grid-row row-type="header">
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Message</vscode-data-grid-cell>
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="2"># Fields</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="3"></vscode-data-grid-cell>
             </vscode-data-grid-row>
             <vscode-data-grid-row *ngFor="let msg of resource.messages">
                 <vscode-data-grid-cell grid-column="1">
-                    <vscode-button (click)="revealMessage(msg.fullName)">{{msg.name}}</vscode-button>
+                    <vscode-button 
+                    style="width: 100%;"
+                    (click)="revealMessage(msg.fullName)">{{msg.name}}</vscode-button>
                 </vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">
                     {{msg.fields.length}}
                 </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="3">
+                    <vscode-button (click)="removeMessage(msg.fullName)" appearance="icon" aria-label="Remove">
+                        <span class="codicon codicon-trash"></span>
+                    </vscode-button>
+                </vscode-data-grid-cell>
             </vscode-data-grid-row>
         </vscode-data-grid>
+
+        <div class="row-space-between" style="margin-top: 2rem;">
+            <h3>Enums</h3>
+            <vscode-button (click)="generateEnum(resource.package)" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+        </div>
+        <vscode-divider></vscode-divider>
+        <vscode-data-grid grid-template-columns="1fr 0.5fr 30px" aria-label="Basic">
+            <vscode-data-grid-row row-type="header">
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Enum</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="2"># Values</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="3"></vscode-data-grid-cell>
+            </vscode-data-grid-row>
+            <vscode-data-grid-row *ngFor="let enum of resource.enums">
+                <vscode-data-grid-cell grid-column="1">
+                    <vscode-button 
+                    style="width: 100%;"
+                    (click)="revealEnum(enum.fullName)">{{enum.name}}</vscode-button>
+                </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">
+                    {{enum.values.length}}
+                </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="3">
+                    <vscode-button (click)="removeEnum(enum.fullName)" appearance="icon" aria-label="Remove">
+                        <span class="codicon codicon-trash"></span>
+                    </vscode-button>
+                </vscode-data-grid-cell>
+            </vscode-data-grid-row>
+        </vscode-data-grid>
+
+        <div class="row-space-between" style="margin-top: 2rem;">
+            <h3>Dependencies</h3>
+            <vscode-button  (click)="addPackageDependency()"  [disabled]="checkDepend(resource.dependencies,true,resource.package)" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+        </div>
+        <div *ngIf="_editModeDependencies">
+            <vscode-dropdown  open>
+                <vscode-option  *ngFor="let pkg of missingPackages" (click)="addPackage(pkg, resource.package)">{{pkg}}</vscode-option>
+            </vscode-dropdown>
+        </div>
+        <vscode-divider></vscode-divider>
+        <ul *ngIf="resource.dependencies;else noDepend" style="list-style: none;">
+            
+            <li *ngFor="let depend of resource.dependencies" class="row-space-between">
+                <vscode-button 
+                style="width: 100%;"
+                (click)="revealPackage(depend)" >{{depend}}</vscode-button>
+                <vscode-button (click)="removePackage(depend, resource.package)" appearance="icon" aria-label="Remove"> <span class="codicon codicon-trash"></span></vscode-button>
+            </li>
+        </ul>
+
+        <ng-template #noDepend>
+            <p>No dependencies for package</p>
+        </ng-template>
+        
     </div>
     <!-- Service -->
-    <div *ngIf=" resource.messages === undefined && resource.kind === undefined">
+    <div *ngIf=" resource.type === 'services'">
         <p *ngIf="resource.description">{{resource.description}}</p>
-        <vscode-data-grid grid-template-columns="1fr 1fr" aria-label="Basic">
+        <div class="row-space-between">
+            <h3>RPC's</h3>
+         
+            <vscode-button (click)="generateRPC(resource.name)" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+        </div>
+        <vscode-divider></vscode-divider>
+        <vscode-data-grid grid-template-columns="1fr 0.5fr 30px" aria-label="Basic">
             <vscode-data-grid-row row-type="header">
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="1">RPC</vscode-data-grid-cell>
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Type</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="3"></vscode-data-grid-cell>
             </vscode-data-grid-row>
             <vscode-data-grid-row *ngFor="let rpc of resource.methods">
                 <vscode-data-grid-cell grid-column="1">
-                    <vscode-button (click)="revealRPC(rpc.name)">{{rpc.name}}</vscode-button>
+                    <vscode-button 
+                    style="width: 100%;"
+                    (click)="revealRPC(rpc.name)">{{rpc.name}}</vscode-button>
                 </vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">
                     {{rpc.clientStreaming && rpc.serverStreaming ? 'Bidi' : rpc.clientStreaming && (rpc.serverStreaming
@@ -108,12 +212,63 @@
                     false || rpc.serverStreaming === undefined) ? 'Client Stream' : rpc.serverStreaming &&
                     (rpc.clientStreaming === false || rpc.clientStreaming === undefined) ? 'Server Stream' : 'Unary'}}
                 </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="3">
+                    <vscode-button (click)="removeRpc(rpc.name,resource.fullName)" appearance="icon" aria-label="Remove">
+                        <span class="codicon codicon-trash"></span>
+                    </vscode-button>
+                </vscode-data-grid-cell>
             </vscode-data-grid-row>
         </vscode-data-grid>
+        <div style="margin-top: 2rem;" class="row-space-between">
+            <h3>Dependencies</h3>
+            <vscode-button 
+            (click)="addServiceDependency()"  [disabled]="checkDepend(resource.dependencies)" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+
+            <div *ngIf="_editModeDependencies">
+                <vscode-dropdown  open>
+                    <vscode-option  *ngFor="let pkg of missingPackages" (click)="addPackage(pkg, resource.name)">{{pkg}}</vscode-option>
+                </vscode-dropdown>
+            </div>
+        </div>
+        <span *ngIf="addingDepend"><vscode-progress-ring></vscode-progress-ring>Adding dependencies ...</span>
+
+        <vscode-divider></vscode-divider>
+        <ul  *ngIf="resource.dependencies" style="list-style: none;">
+            
+            <li *ngFor="let depend of resource.dependencies" class="row-space-between">
+                <vscode-button 
+                style="width: 100%;"
+                (click)="revealPackage(depend)" >{{depend}}</vscode-button>
+                <vscode-button (click)="removePackage(depend, resource.name)" appearance="icon" aria-label="Remove"> <span class="codicon codicon-trash"></span></vscode-button>
+            </li>
+        </ul>
     </div>
 
     <!-- Enum -->
+    <div *ngIf="resource.values !== undefined">
+        <p *ngIf="resource.description">{{resource.description}}</p>
+        <div class="row-space-between" style="margin-top: 2rem;">
+            <h3>Values</h3>
+            <vscode-button (click)="addEnumValue(resource.fullName)" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+        </div>
+        <vscode-divider></vscode-divider>
+        <vscode-data-grid grid-template-columns="1fr 1fr" aria-label="Basic">
+            <vscode-data-grid-row row-type="header">
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Name</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Value</vscode-data-grid-cell>
+            </vscode-data-grid-row>
 
+            <vscode-data-grid-row *ngFor="let eValue of resource.values">
+                <vscode-data-grid-cell grid-column="1">{{eValue.name}}</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="2">{{eValue.number ? eValue.number : 'DEFAULT'}}</vscode-data-grid-cell>
+            </vscode-data-grid-row>
+        </vscode-data-grid>
+
+    </div>
     <!-- Message -->
     <div *ngIf="resource.fields !== undefined">
         <p *ngIf="resource.description">{{resource.description}}</p>
@@ -125,31 +280,52 @@
             <vscode-data-grid-row>
                 <vscode-data-grid-cell grid-column="1">{{resource.name}}</vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">
-                    <vscode-button (click)="revealPackage(resource.fullName.split('.')[0]+'.'+resource.fullName.split('.')[1]+'.'+resource.fullName.split('.')[2])">
+                    <vscode-button 
+                    style="width: 100%;"
+                    (click)="revealPackage(resource.fullName.split('.')[0]+'.'+resource.fullName.split('.')[1]+'.'+resource.fullName.split('.')[2])">
                         {{resource.fullName.split('.')[1]}}</vscode-button>
                 </vscode-data-grid-cell>
             </vscode-data-grid-row>
 
         </vscode-data-grid>
-        <h5>Fields</h5>
+        <div class="row-space-between" style="margin-top: 2rem;">
+            <h3>Fields</h3>
+            <vscode-button (click)="addMessageField(resource.fullName)" appearance="icon" aria-label="Add">
+                <span class="codicon codicon-add"></span>
+            </vscode-button>
+        </div>
         <vscode-divider></vscode-divider>
-        <vscode-data-grid grid-template-columns="1fr 1fr 1fr" aria-label="Basic">
+        <vscode-data-grid grid-template-columns="1fr 100px 100px" aria-label="Basic">
             <vscode-data-grid-row row-type="header">
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="1">Name</vscode-data-grid-cell>
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="2">Type</vscode-data-grid-cell>
                 <vscode-data-grid-cell cell-type="columnheader" grid-column="3">Label</vscode-data-grid-cell>
+                <vscode-data-grid-cell cell-type="columnheader" grid-column="4"></vscode-data-grid-cell>
+
             </vscode-data-grid-row>
             <vscode-data-grid-row *ngFor="let field of resource.fields;">
-                <vscode-data-grid-cell grid-column="1">{{field.name}}</vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="1">
+                    <vscode-button *ngIf="field.messageType; else regularField" (click)="revealMessage(field.messageType)">{{field.name}}</vscode-button>
+                    <ng-template #regularField>
+                        {{field.name}}
+                    </ng-template>
+                </vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">
-                    <div class="row"><i
-                            [class]="'codicon codicon-'+(field.fieldType.split('_')[1].toLowerCase() === 'string' ? 'symbol-string' : field.fieldType.split('_')[1].toLowerCase().includes('int') || field.fieldType.split('_')[1].toLowerCase().includes('double') || field.fieldType.split('_')[1].toLowerCase().includes('float') ? 'symbol-numeric' : field.fieldType.split('_')[1].toLowerCase() === 'bool' ? 'symbol-boolean':  field.fieldType.split('_')[1].toLowerCase() === 'message' ? 'mail' : 'symbol-field' )"></i>{{field.fieldType.split('_')[1].toLowerCase()}}
+                    <div class="row-space-between"><i style="margin: 0;"
+                            [class]="'codicon codicon-'+(field.fieldType.split('_')[1].toLowerCase() === 'string' ? 'symbol-string' : field.fieldType.split('_')[1].toLowerCase().includes('int') || field.fieldType.split('_')[1].toLowerCase().includes('double') || field.fieldType.split('_')[1].toLowerCase().includes('float') ? 'symbol-numeric' : field.fieldType.split('_')[1].toLowerCase() === 'bool' ? 'symbol-boolean':  field.fieldType.split('_')[1].toLowerCase() === 'message' ? 'mail' : 'symbol-field' )"></i>
+                            <p>{{field.fieldType.split('_')[1].toLowerCase()}}</p>
                     </div>
                 </vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="3">
-                    <div class="row"><i
-                            [class]="'codicon codicon-'+(field.label.split('_')[1].toLowerCase() === 'repeated' ? 'symbol-array' : 'tag' )"></i>{{field.label.split('_')[1].toLowerCase()}}
+                    <div class="row-space-between" ><i style="margin: 0;"
+                            [class]="'codicon codicon-'+(field.label.split('_')[1].toLowerCase() === 'repeated' ? 'symbol-array' : 'tag' )"></i>
+                            <p>{{field.label.split('_')[1].toLowerCase()}}</p>
                     </div>
+                </vscode-data-grid-cell>
+                <vscode-data-grid-cell grid-column="4">
+                    <vscode-button disabled appearance="icon" aria-label="Remove">
+                        <span class="codicon codicon-trash"></span>
+                    </vscode-button>
                 </vscode-data-grid-cell>
             </vscode-data-grid-row>
         </vscode-data-grid>
@@ -167,11 +343,13 @@
             <vscode-data-grid-row>
                 <vscode-data-grid-cell grid-column="1">In</vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">
-                    <vscode-button (click)="revealMessage(resource.inputType)">{{resource.inputType.split('.').pop()}}
+                    <vscode-button
+                    style="width: 100%;"
+                    (click)="revealMessage(resource.inputType)">{{resource.inputType.split('.').pop()}}
                     </vscode-button>
                 </vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="3">
-                    <ng-container *ngIf="resource.serverStreaming; then stream; else unary"></ng-container>
+                    <ng-container *ngIf="resource.clientStreaming then stream; else unary"></ng-container>
                     <ng-template #stream>
                         <div class="icon"><i class="codicon codicon-check"></i> </div>
                     </ng-template>
@@ -183,7 +361,9 @@
             <vscode-data-grid-row>
                 <vscode-data-grid-cell grid-column="1">Out</vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="2">
-                    <vscode-button (click)="revealMessage(resource.outputType)">{{resource.outputType.split('.').pop()}}
+                    <vscode-button 
+                    style="width: 100%;"
+                    (click)="revealMessage(resource.outputType)">{{resource.outputType.split('.').pop()}}
                     </vscode-button>
                 </vscode-data-grid-cell>
                 <vscode-data-grid-cell grid-column="3">
@@ -199,5 +379,6 @@
             </vscode-data-grid-row>
         </vscode-data-grid>
     </div>
+
 
 </div>

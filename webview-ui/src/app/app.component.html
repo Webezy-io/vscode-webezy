@@ -1,6 +1,6 @@
 <main>
   <app-home *ngIf="homePage"></app-home>
-  <app-inspector style="width: 100%;" [resource]="resource" *ngIf="inspectorPage"></app-inspector>
+  <app-inspector style="width: 100%;" [projectName]="projectName" [resource]="resource" *ngIf="inspectorPage"></app-inspector>
   <app-resource-generator style="width: 100%;"  *ngIf="generatorPage"></app-resource-generator>
   <app-help style="width: 100%;"  *ngIf="helpPage"></app-help>
 </main>

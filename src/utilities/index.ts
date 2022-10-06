@@ -30,11 +30,23 @@ export function getProject(webezyJsonPath:string): WebezyJson | undefined {
 
 export function getConfig():VSCodeWebezyConfig {
     const projects = workspace.getConfiguration('webezy').get('projects.defaultProjects');
-    const cli = workspace.getConfiguration('webezy').get('cli.pyInterpreter');
+    const projectsDefaultPort = workspace.getConfiguration('webezy').get('projects.defaultPort');
+    const projectsDefaultDomain = workspace.getConfiguration('webezy').get('projects.defaultDomain');
+
+    const cliLogLevel = workspace.getConfiguration('webezy').get('cli.logLevel');
+    const cliAutoExpand = workspace.getConfiguration('webezy').get('cli.autoExpand');
+    const cliAutoBuild = workspace.getConfiguration('webezy').get('cli.autoBuild');
     
     return {
         projects: {
-            defaultProjects: typeof projects === 'object' ? <string[]>projects : []
+            defaultProjects: typeof projects === 'object' ? <string[]>projects : [],
+            defaultPort: typeof projectsDefaultPort === 'number' ? projectsDefaultPort : 50051,
+            defaultDomain: typeof projectsDefaultDomain === 'string' ? projectsDefaultDomain : 'domain',
+        },
+        cli: {
+            autoExpand: typeof cliAutoExpand === 'boolean' ? cliAutoExpand : true,
+            logLevel:typeof cliLogLevel === 'string' ? cliLogLevel : 'ERROR',
+            autoBuild: typeof cliAutoBuild === 'boolean' ? cliAutoBuild : false
         }
     };
     
