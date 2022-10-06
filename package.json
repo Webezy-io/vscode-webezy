@@ -2,7 +2,7 @@
   "name": "vscode-webezy",
   "displayName": "webezy",
   "description": "A webezy.io framework extension for creating managing and deploying your webezy.io projects.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "webezy",
   "engines": {
     "vscode": "^1.46.0"
@@ -284,13 +284,18 @@
             "order": 1,
             "uniqueItems": true,
             "markdownDescription": "Will change the default --expand argument to every cli command that support it",
-            "default":true
+            "default": true
           },
           "webezy.cli.logLevel": {
             "type": "string",
             "order": 1,
             "default": "ERROR",
-            "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARNING",
+              "ERROR"
+            ],
             "enumDescriptions": [
               "Will log all DEBUG logs and above",
               "Will log all INFO logs and above",
@@ -303,7 +308,7 @@
             "order": 1,
             "uniqueItems": true,
             "markdownDescription": "Will try to build resources after newly created resource",
-            "default":true
+            "default": true
           }
         }
       }
