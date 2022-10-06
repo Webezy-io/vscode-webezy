@@ -186,6 +186,10 @@ class WebezyPanel {
             console.log(`[${res}] Sent to webview: ${JSON.stringify(resource.uri)} - ${projectName}`);
         });
     }
+    refreshAppModule() {
+        var _a, _b;
+        (_a = this._view) === null || _a === void 0 ? void 0 : _a.webview.postMessage({ type: 'init', resource: (_b = this._webezyModule) === null || _b === void 0 ? void 0 : _b.projects, page: this._page });
+    }
 }
 exports.WebezyPanel = WebezyPanel;
 //# sourceMappingURL=webezy.js.map

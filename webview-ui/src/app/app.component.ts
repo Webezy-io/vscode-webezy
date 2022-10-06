@@ -36,6 +36,7 @@ export class AppComponent implements OnInit {
   startData: Projects = {};
   resource : any;
   projectName: string = '';
+  loadingResource: boolean = false;
   @HostListener('window:message', ['$event'])
   onMessage(event:{data:VSCodeMessage}) {
 
@@ -45,7 +46,11 @@ export class AppComponent implements OnInit {
       this.initPage(event.data.page);
     } else {
       this.projectName = event.data.project
-      this.resource = event.data.resource;
+      this.loadingResource = true;
+      setTimeout(() => {
+        this.resource = event.data.resource;
+        this.loadingResource = false;
+      }, 100);
     }
   }
 

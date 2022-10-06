@@ -5,7 +5,11 @@ This is an extension for [webezy.io CLI](https://www.webezy.io) to create manage
 ## Requirements
 
 This extension using and levreging the webezy.io cli.
-You can install the webezy.io cli after [free login](https://www.webezy.io)
+You need to install the webezy.io cli from pip
+
+```sh
+pip install webezyio
+```
 
 ## Documentation
 
@@ -40,11 +44,7 @@ Open webezy.io panel from `Activity Bar`:
 
 > Note: At the first time your webezy.io extension has been activated you will need to choose a `Python` interpreter which webezy CLI is insatlled at.
 
-![Open Webezy.io Extension](assets/vscode-webezy-init.gif)
-
-Projects view + Resource inspector view:
-
-![Features](assets/vscode-webezy-preview.gif)
+![Open Webezy.io Extension](assets/webezyio-preview.gif)
 
 
 > Tip: Some commands are available through the command pallate (windows `Ctrl+Shift+P` or MacOS `⌘+⇧+P`) try running `webezy: Display Version` to get your current installed webezy CLI in your environment. 

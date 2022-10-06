@@ -214,4 +214,8 @@ export class WebezyPanel implements WebviewViewProvider {
       console.log(`[${res}] Sent to webview: ${JSON.stringify(resource.uri)} - ${projectName}`);
     });
   }
+
+  public refreshAppModule() {
+    this._view?.webview.postMessage({type:'init',resource:this._webezyModule?.projects,page:this._page});
+  }
 }

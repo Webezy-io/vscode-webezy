@@ -355,9 +355,6 @@ const getDirectories = (source) => (0, fs_1.readdirSync)(source, { withFileTypes
     .map(dirent => dirent.name);
 function initTreeView(treeView, context, webezy, folderPath, statusBar) {
     vscode_1.commands.executeCommand('setContext', 'webezy.projects', true);
-    if (watcher) {
-        watcher.dispose();
-    }
     let currentProject = '';
     treeView.onDidChangeSelection(event => {
         var _a, _b, _c, _d, _e, _f;
@@ -425,7 +422,8 @@ function initTreeView(treeView, context, webezy, folderPath, statusBar) {
         watcher.onDidChange(el => {
             vscode_1.window.showInformationMessage('Altered webezy.json\n' + el.fsPath);
             setTimeout(() => {
-                var _a, _b;
+                var _a, _b, _c;
+                console.log('Chnaged current resource', currentResourceOnView);
                 webezy.refresh();
                 vscode_1.commands.executeCommand('webezy.refreshEntry');
                 if (typeof (currentResourceOnView.data) === 'object') {
@@ -449,15 +447,15 @@ function initTreeView(treeView, context, webezy, folderPath, statusBar) {
                     }
                 }
                 else {
-                    console.log(webezy.projects[currentProject]);
                     data = webezy.projects[currentProject].packages[currentResourceOnView.data];
                     if (data === undefined) {
                         data = webezy.projects[currentProject].services[currentResourceOnView.data];
                     }
                 }
-                console.log('Refreshing data ' + JSON.stringify(data));
+                console.log('seting resource', data);
                 (_a = webezy_1.WebezyPanel.currentPanel) === null || _a === void 0 ? void 0 : _a.setWebezyModule(webezy);
-                (_b = webezy_1.WebezyPanel.currentPanel) === null || _b === void 0 ? void 0 : _b.setResource(data, context.globalState.get('webezy.projects.active'));
+                (_b = webezy_1.WebezyPanel.currentPanel) === null || _b === void 0 ? void 0 : _b.refreshAppModule();
+                (_c = webezy_1.WebezyPanel.currentPanel) === null || _c === void 0 ? void 0 : _c.setResource(data, context.globalState.get('webezy.projects.active'));
             }, 500);
         });
         console.log(event.selection[0].data.kind, event.selection[0].data.type);

@@ -377,9 +377,7 @@ const getDirectories = (source: string) =>
 function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:WebezyModule,folderPath:string,statusBar:StatusBarItem) {
 
   commands.executeCommand('setContext','webezy.projects', true);
-  if(watcher) {
-    watcher.dispose();
-  }
+ 
   let currentProject:any='';
   treeView.onDidChangeSelection(event => {
     if(event.selection[0].data.uri !== undefined) {
@@ -449,6 +447,7 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
     watcher.onDidChange(el => {
       window.showInformationMessage('Altered webezy.json\n'+el.fsPath);
       setTimeout(() => {
+        console.log('Chnaged current resource',currentResourceOnView);
         webezy.refresh();
         commands.executeCommand('webezy.refreshEntry');
         if (typeof(currentResourceOnView.data) === 'object') {
@@ -467,18 +466,15 @@ function initTreeView(treeView:TreeView<any>,context:ExtensionContext,webezy:Web
             data = webezy.projects[currentProject];
           }
         } else {
-          console.log(webezy.projects[currentProject])
-    
           data = webezy.projects[currentProject].packages[currentResourceOnView.data];
           if (data === undefined) {
             data = webezy.projects[currentProject].services[currentResourceOnView.data];
           }
         }
-        console.log('Refreshing data '+JSON.stringify(data));
+        console.log('seting resource',data)
         WebezyPanel.currentPanel?.setWebezyModule(<any>webezy);
-
+        WebezyPanel.currentPanel?.refreshAppModule();
         WebezyPanel.currentPanel?.setResource(data,<string>context.globalState.get('webezy.projects.active'));
-
       },500);
     });
 

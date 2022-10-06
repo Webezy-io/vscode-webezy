@@ -14,16 +14,16 @@
     </vscode-button>
     <vscode-button style="margin-left: auto;" appearance="icon" disabled><span class="codicon codicon-json"></span>
     </vscode-button>
-    <vscode-button appearance="icon" *ngIf="!resource.kind.includes('message')" (click)="openCodeFile()"><span class="codicon codicon-file"></span></vscode-button>
+    <vscode-button appearance="icon" *ngIf="resource.type !== 'packages' && resource.type !== 'services' ? !resource.kind.includes('message') : false" (click)="openCodeFile()"><span class="codicon codicon-file"></span></vscode-button>
 </div>
 <vscode-divider></vscode-divider>
 <div>
 
     <!-- Project -->
-    <div class="row">
-        <vscode-button *ngIf="resource.type === 'projects'" style="margin-right: 1rem;" (click)="build()" >Build</vscode-button>
-        <vscode-button *ngIf="resource.type === 'projects' && serverRunMode === false" appearance="icon" (click)="run()" ><span class="codicon codicon-play"></span></vscode-button>
-        <vscode-button *ngIf="resource.type === 'projects' && serverRunMode === true" appearance="icon" (click)="stop()" ><span class="codicon codicon-debug-stop"></span></vscode-button>
+    <div class="row"  *ngIf="resource.type === 'projects'">
+        <vscode-button style="margin-right: 1rem;" (click)="build()" >Build</vscode-button>
+        <vscode-button *ngIf="serverRunMode === false" appearance="icon" (click)="run()" ><span class="codicon codicon-play"></span></vscode-button>
+        <vscode-button *ngIf="serverRunMode === true" appearance="icon" (click)="stop()" ><span class="codicon codicon-debug-stop"></span></vscode-button>
     
     </div>
 
@@ -94,7 +94,7 @@
     </div>
 
     <!-- Package -->
-    <div *ngIf=" resource.type === 'packages'">
+    <div *ngIf="resource.type === 'packages'">
         <p *ngIf="resource.description">{{resource.description}}</p>
         <div class="row-space-between">
             <h3>Messages</h3>
